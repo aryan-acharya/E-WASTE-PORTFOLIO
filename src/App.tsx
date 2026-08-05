@@ -12,7 +12,8 @@ import { SUBJECTS_DATA } from './lib/data/subjects';
 import { 
   subscribeToAssignments, 
   saveAssignmentToFirestore, 
-  deleteAssignmentFromFirestore 
+  deleteAssignmentFromFirestore,
+  clearAllAssignmentsFromFirestore 
 } from './lib/firebase';
 
 export default function App() {
@@ -20,35 +21,24 @@ export default function App() {
   const [activePdfAssignment, setActivePdfAssignment] = useState<Assignment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Assignments state with initial fallback to localStorage
-  const [assignments, setAssignments] = useState<Assignment[]>(() => {
-    const saved = localStorage.getItem('ewaste_assignments');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        // ignore parse error
-      }
-    }
-    return ASSIGNMENTS_DATA;
-  });
+  // Assignments state
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+
+  // Clear existing items once on initial load as requested by user
+  useEffect(() => {
+    localStorage.removeItem('ewaste_assignments');
+    clearAllAssignmentsFromFirestore();
+  }, []);
 
   // Real-time Firestore synchronization across all users & devices
   useEffect(() => {
-    let hasSeeded = false;
     const unsubscribe = subscribeToAssignments(
       (firestoreAssignments) => {
-        if (firestoreAssignments.length === 0 && !hasSeeded) {
-          hasSeeded = true;
-          handleLoadSampleData();
-        } else {
-          setAssignments(firestoreAssignments);
-          try {
-            localStorage.setItem('ewaste_assignments', JSON.stringify(firestoreAssignments));
-          } catch (e) {
-            console.warn('LocalStorage save error:', e);
-          }
+        setAssignments(firestoreAssignments);
+        try {
+          localStorage.setItem('ewaste_assignments', JSON.stringify(firestoreAssignments));
+        } catch (e) {
+          console.warn('LocalStorage save error:', e);
         }
       },
       (error) => {
@@ -58,6 +48,7 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
 
   const handleAddAssignment = async (newAssignment: Assignment) => {
     // Optimistic UI update

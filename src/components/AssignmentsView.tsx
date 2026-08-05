@@ -22,7 +22,6 @@ import {
   Wrench,
   Recycle,
   PlusCircle,
-  Trash2,
   RefreshCw
 } from 'lucide-react';
 import { Assignment, SortOption, AssignmentCategory } from '../types';
@@ -347,20 +346,12 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                         </span>
                       </div>
 
-                      {/* Status / Trash Controls */}
+                      {/* Status Badge */}
                       <div className="flex items-center gap-1.5">
                         <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" />
                           {assignment.status}
                         </span>
-
-                        <button
-                          onClick={() => onDeleteAssignment(assignment.id)}
-                          title="Delete Assignment"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </div>
                     </div>
 

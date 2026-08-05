@@ -6,7 +6,8 @@ import {
   setDoc, 
   deleteDoc, 
   doc, 
-  query
+  query,
+  getDocs
 } from 'firebase/firestore';
 import { Assignment } from '../types';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -105,3 +106,21 @@ export async function deleteAssignmentFromFirestore(id: string): Promise<void> {
   const docRef = doc(db, ASSIGNMENTS_COLLECTION, id);
   await deleteDoc(docRef);
 }
+
+/**
+ * Delete all assignments from Firestore
+ */
+export async function clearAllAssignmentsFromFirestore(): Promise<void> {
+  try {
+    const assignmentsRef = collection(db, ASSIGNMENTS_COLLECTION);
+    const snapshot = await getDocs(query(assignmentsRef));
+    const deletePromises: Promise<void>[] = [];
+    snapshot.forEach((docSnap) => {
+      deletePromises.push(deleteDoc(docSnap.ref));
+    });
+    await Promise.all(deletePromises);
+  } catch (e) {
+    console.error('Failed to clear assignments from Firestore:', e);
+  }
+}
+
