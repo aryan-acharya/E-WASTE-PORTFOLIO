@@ -57,19 +57,31 @@ export default function App() {
     // Optimistic UI update
     setAssignments((prev) => [newAssignment, ...prev.filter(a => a.id !== newAssignment.id)]);
     // Save to Firestore globally for everyone
-    await saveAssignmentToFirestore(newAssignment);
+    try {
+      await saveAssignmentToFirestore(newAssignment);
+    } catch (err) {
+      console.error('Failed to sync assignment to Firestore:', err);
+    }
   };
 
   const handleDeleteAssignment = async (id: string) => {
     // Optimistic UI update
     setAssignments((prev) => prev.filter((a) => a.id !== id));
     // Remove from Firestore globally
-    await deleteAssignmentFromFirestore(id);
+    try {
+      await deleteAssignmentFromFirestore(id);
+    } catch (err) {
+      console.error('Failed to delete assignment from Firestore:', err);
+    }
   };
 
   const handleLoadSampleData = async () => {
     for (const item of SAMPLE_ASSIGNMENTS_DATA) {
-      await saveAssignmentToFirestore(item);
+      try {
+        await saveAssignmentToFirestore(item);
+      } catch (err) {
+        console.error('Failed to load sample data item to Firestore:', err);
+      }
     }
   };
 

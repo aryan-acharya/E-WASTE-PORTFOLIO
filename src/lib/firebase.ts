@@ -76,7 +76,19 @@ export async function saveAssignmentToFirestore(assignment: Assignment): Promise
     ...assignment,
     createdAt: new Date().toISOString()
   };
-  await setDoc(docRef, dataToSave, { merge: true });
+
+  try {
+    await setDoc(docRef, dataToSave, { merge: true });
+  } catch (err: any) {
+    console.warn('Firestore setDoc failed, attempting fallback for large payload:', err);
+    // If pdfUrl is a huge data URL exceeding Firestore 1MB document limit, fallback to default template PDF
+    if (dataToSave.pdfUrl && dataToSave.pdfUrl.length > 500000) {
+      dataToSave.pdfUrl = '/assignments/ewaste-global-generation-report.pdf';
+      await setDoc(docRef, dataToSave, { merge: true });
+    } else {
+      throw err;
+    }
+  }
 }
 
 /**

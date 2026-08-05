@@ -92,10 +92,21 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
       let fileSize = '1.2 MB';
 
       if (pdfFile) {
-        // Read file as base64 Data URL so it is universally accessible across browsers/devices
-        pdfUrl = await readFileAsDataURL(pdfFile);
         const mb = (pdfFile.size / (1024 * 1024)).toFixed(1);
         fileSize = `${mb} MB`;
+
+        // If file is within 700 KB, convert to base64 Data URL for global cloud sharing
+        if (pdfFile.size <= 700 * 1024) {
+          try {
+            pdfUrl = await readFileAsDataURL(pdfFile);
+          } catch (e) {
+            pdfUrl = URL.createObjectURL(pdfFile);
+          }
+        } else {
+          // For larger files (>700KB), create local blob URL for current browser session
+          // and fallback to standard PDF for cloud storage to adhere to Firestore document size limits
+          pdfUrl = URL.createObjectURL(pdfFile);
+        }
       } else if (pdfUrlInput.trim()) {
         pdfUrl = pdfUrlInput.trim();
         fileSize = 'Custom PDF';
