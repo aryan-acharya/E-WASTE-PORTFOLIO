@@ -72,17 +72,24 @@ export function subscribeToAssignments(
  */
 export async function saveAssignmentToFirestore(assignment: Assignment): Promise<void> {
   const docRef = doc(db, ASSIGNMENTS_COLLECTION, assignment.id);
+
+  // Ensure pdfUrl is safe for Firestore 1MB limit
+  let safePdfUrl = assignment.pdfUrl || '/assignments/ewaste-global-generation-report.pdf';
+  if (safePdfUrl.startsWith('data:') && safePdfUrl.length > 750000) {
+    safePdfUrl = '/assignments/ewaste-global-generation-report.pdf';
+  }
+
   const dataToSave = {
     ...assignment,
+    pdfUrl: safePdfUrl,
     createdAt: new Date().toISOString()
   };
 
   try {
     await setDoc(docRef, dataToSave, { merge: true });
   } catch (err: any) {
-    console.warn('Firestore setDoc failed, attempting fallback for large payload:', err);
-    // If pdfUrl is a huge data URL exceeding Firestore 1MB document limit, fallback to default template PDF
-    if (dataToSave.pdfUrl && dataToSave.pdfUrl.length > 500000) {
+    console.warn('Firestore setDoc warning, attempting fallback:', err);
+    if (dataToSave.pdfUrl.length > 300000) {
       dataToSave.pdfUrl = '/assignments/ewaste-global-generation-report.pdf';
       await setDoc(docRef, dataToSave, { merge: true });
     } else {

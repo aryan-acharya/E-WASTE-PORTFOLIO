@@ -42,11 +42,17 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
   if (!assignment) return null;
 
   const handleCopyLink = () => {
-    const fullUrl = `${window.location.origin}${assignment.pdfUrl}`;
+    const fullUrl = assignment.pdfUrl.startsWith('http') || assignment.pdfUrl.startsWith('data:') 
+      ? assignment.pdfUrl 
+      : `${window.location.origin}${assignment.pdfUrl}`;
     navigator.clipboard.writeText(fullUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const iframeSrc = (assignment.pdfUrl.startsWith('data:') || assignment.pdfUrl.startsWith('blob:'))
+    ? assignment.pdfUrl
+    : `${assignment.pdfUrl}#toolbar=0&navpanes=0`;
 
   return (
     <AnimatePresence>
@@ -156,7 +162,7 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 dark:bg-slate-950/60 min-h-[450px]">
             <div className="w-full h-[550px] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden relative shadow-inner">
               <iframe
-                src={`${assignment.pdfUrl}#toolbar=0&navpanes=0`}
+                src={iframeSrc}
                 className="w-full h-full border-0"
                 title={assignment.title}
                 onLoad={() => setIframeLoaded(true)}

@@ -42,10 +42,9 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUrlInput, setPdfUrlInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
