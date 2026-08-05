@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Assignments and submissions for E-Waste & Environmental Management coursework",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "weekNumber": { "type": "number" },
+        "submissionDate": { "type": "string" },
+        "description": { "type": "string" },
+        "pdfUrl": { "type": "string" },
+        "fileSize": { "type": "string" },
+        "type": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string" },
+        "marksObtained": { "type": "string" },
+        "topics": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "subject", "weekNumber", "description", "pdfUrl"]
+    }
+  },
+  "firestore": {
+    "/assignments/{assignmentId}": {
+      "entity": "Assignment",
+      "description": "Shared assignment collection accessible by all users"
+    }
+  }
+}

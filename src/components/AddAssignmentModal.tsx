@@ -45,6 +45,8 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
 
   if (!isOpen) return null;
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -59,7 +61,16 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const readFileAsDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -72,55 +83,66 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
       return;
     }
 
-    // Determine PDF URL and file size
-    let pdfUrl = '/assignments/ewaste-global-generation-report.pdf';
-    let fileSize = '1.2 MB';
-
-    if (pdfFile) {
-      pdfUrl = URL.createObjectURL(pdfFile);
-      const mb = (pdfFile.size / (1024 * 1024)).toFixed(1);
-      fileSize = `${mb} MB`;
-    } else if (pdfUrlInput.trim()) {
-      pdfUrl = pdfUrlInput.trim();
-      fileSize = 'Custom PDF';
-    }
-
-    // Parse topics
-    const topics = topicsInput
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-
-    if (topics.length === 0) {
-      topics.push('E-Waste', 'Environmental Management');
-    }
-
-    const newAssignment: Assignment = {
-      id: `ew-custom-${Date.now()}`,
-      title: title.trim(),
-      subject,
-      weekNumber: Number(weekNumber) || 1,
-      submissionDate,
-      description: description.trim(),
-      pdfUrl,
-      fileSize,
-      type,
-      category: type === 'Report' ? 'Reports' : type === 'Research' ? 'Research' : type === 'Activity' ? 'Activities' : type === 'Presentation' ? 'Presentations' : 'Practicals',
-      status,
-      marksObtained: marksObtained.trim() || undefined,
-      topics
-    };
-
-    onAddAssignment(newAssignment);
-    onClose();
-
-    // Reset Form
-    setTitle('');
-    setDescription('');
-    setTopicsInput('');
-    setPdfFile(null);
-    setPdfUrlInput('');
+    setIsSubmitting(true);
     setErrorMsg('');
+
+    try {
+      // Determine PDF URL and file size
+      let pdfUrl = '/assignments/ewaste-global-generation-report.pdf';
+      let fileSize = '1.2 MB';
+
+      if (pdfFile) {
+        // Read file as base64 Data URL so it is universally accessible across browsers/devices
+        pdfUrl = await readFileAsDataURL(pdfFile);
+        const mb = (pdfFile.size / (1024 * 1024)).toFixed(1);
+        fileSize = `${mb} MB`;
+      } else if (pdfUrlInput.trim()) {
+        pdfUrl = pdfUrlInput.trim();
+        fileSize = 'Custom PDF';
+      }
+
+      // Parse topics
+      const topics = topicsInput
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+
+      if (topics.length === 0) {
+        topics.push('E-Waste', 'Environmental Management');
+      }
+
+      const newAssignment: Assignment = {
+        id: `ew-custom-${Date.now()}`,
+        title: title.trim(),
+        subject,
+        weekNumber: Number(weekNumber) || 1,
+        submissionDate,
+        description: description.trim(),
+        pdfUrl,
+        fileSize,
+        type,
+        category: type === 'Report' ? 'Reports' : type === 'Research' ? 'Research' : type === 'Activity' ? 'Activities' : type === 'Presentation' ? 'Presentations' : 'Practicals',
+        status,
+        marksObtained: marksObtained.trim() || undefined,
+        topics
+      };
+
+      await onAddAssignment(newAssignment);
+      onClose();
+
+      // Reset Form
+      setTitle('');
+      setDescription('');
+      setTopicsInput('');
+      setPdfFile(null);
+      setPdfUrlInput('');
+      setErrorMsg('');
+    } catch (err: any) {
+      console.error('Error adding assignment:', err);
+      setErrorMsg(err?.message || 'Failed to process assignment. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -374,10 +396,20 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 flex items-center gap-2 transition-transform transform active:scale-95"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 flex items-center gap-2 transition-transform transform active:scale-95 cursor-pointer disabled:cursor-not-allowed"
               >
-                <PlusCircle className="w-4 h-4" />
-                <span>Save Assignment</span>
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving to Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="w-4 h-4" />
+                    <span>Save Assignment</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

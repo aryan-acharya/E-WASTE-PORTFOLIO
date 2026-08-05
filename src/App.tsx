@@ -9,39 +9,68 @@ import { FloatingBlobs } from './components/FloatingBlobs';
 import { Footer } from './components/Footer';
 import { ASSIGNMENTS_DATA, SAMPLE_ASSIGNMENTS_DATA } from './lib/data/assignments';
 import { SUBJECTS_DATA } from './lib/data/subjects';
+import { 
+  subscribeToAssignments, 
+  saveAssignmentToFirestore, 
+  deleteAssignmentFromFirestore 
+} from './lib/firebase';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<NavSection>('home');
   const [activePdfAssignment, setActivePdfAssignment] = useState<Assignment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // LocalStorage state management for user assignments
+  // Assignments state with initial fallback to localStorage
   const [assignments, setAssignments] = useState<Assignment[]>(() => {
     const saved = localStorage.getItem('ewaste_assignments');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {
-        return ASSIGNMENTS_DATA; // []
+        // ignore parse error
       }
     }
-    return ASSIGNMENTS_DATA; // []
+    return ASSIGNMENTS_DATA;
   });
 
+  // Real-time Firestore synchronization across all users & devices
   useEffect(() => {
-    localStorage.setItem('ewaste_assignments', JSON.stringify(assignments));
-  }, [assignments]);
+    const unsubscribe = subscribeToAssignments(
+      (firestoreAssignments) => {
+        setAssignments(firestoreAssignments);
+        try {
+          localStorage.setItem('ewaste_assignments', JSON.stringify(firestoreAssignments));
+        } catch (e) {
+          console.warn('LocalStorage save error:', e);
+        }
+      },
+      (error) => {
+        console.warn('Firestore subscription fallback:', error);
+      }
+    );
 
-  const handleAddAssignment = (newAssignment: Assignment) => {
-    setAssignments((prev) => [newAssignment, ...prev]);
+    return () => unsubscribe();
+  }, []);
+
+  const handleAddAssignment = async (newAssignment: Assignment) => {
+    // Optimistic UI update
+    setAssignments((prev) => [newAssignment, ...prev.filter(a => a.id !== newAssignment.id)]);
+    // Save to Firestore globally for everyone
+    await saveAssignmentToFirestore(newAssignment);
   };
 
-  const handleDeleteAssignment = (id: string) => {
+  const handleDeleteAssignment = async (id: string) => {
+    // Optimistic UI update
     setAssignments((prev) => prev.filter((a) => a.id !== id));
+    // Remove from Firestore globally
+    await deleteAssignmentFromFirestore(id);
   };
 
-  const handleLoadSampleData = () => {
-    setAssignments(SAMPLE_ASSIGNMENTS_DATA);
+  const handleLoadSampleData = async () => {
+    for (const item of SAMPLE_ASSIGNMENTS_DATA) {
+      await saveAssignmentToFirestore(item);
+    }
   };
 
   // Handle keyboard shortcut (⌘K or Ctrl+K) to focus search / switch to assignments
