@@ -94,17 +94,21 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
         const mb = (pdfFile.size / (1024 * 1024)).toFixed(1);
         fileSize = `${mb} MB`;
 
-        // If file is within 700 KB, convert to base64 Data URL for global cloud sharing
         if (pdfFile.size <= 700 * 1024) {
           try {
             pdfUrl = await readFileAsDataURL(pdfFile);
           } catch (e) {
-            pdfUrl = URL.createObjectURL(pdfFile);
+            pdfUrl = '/assignments/ewaste-global-generation-report.pdf';
           }
         } else {
-          // For larger files (>700KB), create local blob URL for current browser session
-          // and fallback to standard PDF for cloud storage to adhere to Firestore document size limits
-          pdfUrl = URL.createObjectURL(pdfFile);
+          // File is larger than 700KB
+          if (pdfUrlInput.trim()) {
+            pdfUrl = pdfUrlInput.trim();
+          } else {
+            setErrorMsg('The selected PDF is over 700 KB limit for inline database storage. Please provide a public PDF URL or select a smaller PDF file.');
+            setIsSubmitting(false);
+            return;
+          }
         }
       } else if (pdfUrlInput.trim()) {
         pdfUrl = pdfUrlInput.trim();
@@ -377,7 +381,7 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                       <p className="font-bold text-slate-700 dark:text-slate-300">
                         Click or drag a PDF file here to upload
                       </p>
-                      <p className="text-slate-400">Supports PDF documents up to 25MB</p>
+                      <p className="text-slate-400">PDF files up to 700 KB (or provide a PDF URL below)</p>
                     </div>
                   )}
                 </div>

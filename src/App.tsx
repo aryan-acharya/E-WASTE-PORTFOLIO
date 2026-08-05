@@ -36,13 +36,19 @@ export default function App() {
 
   // Real-time Firestore synchronization across all users & devices
   useEffect(() => {
+    let hasSeeded = false;
     const unsubscribe = subscribeToAssignments(
       (firestoreAssignments) => {
-        setAssignments(firestoreAssignments);
-        try {
-          localStorage.setItem('ewaste_assignments', JSON.stringify(firestoreAssignments));
-        } catch (e) {
-          console.warn('LocalStorage save error:', e);
+        if (firestoreAssignments.length === 0 && !hasSeeded) {
+          hasSeeded = true;
+          handleLoadSampleData();
+        } else {
+          setAssignments(firestoreAssignments);
+          try {
+            localStorage.setItem('ewaste_assignments', JSON.stringify(firestoreAssignments));
+          } catch (e) {
+            console.warn('LocalStorage save error:', e);
+          }
         }
       },
       (error) => {
