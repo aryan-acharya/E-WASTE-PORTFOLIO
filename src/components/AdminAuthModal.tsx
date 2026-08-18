@@ -44,16 +44,29 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     setErrorMsg('');
     try {
       const user = await loginWithGoogle();
+      if (!user) {
+        setErrorMsg('Sign in could not be completed. Please try again.');
+        return;
+      }
+      
       if (!user.isAdmin) {
         setErrorMsg(
-          'Access restricted: This Google account is not authorized to manage coursework assignments.'
+          `Signed in as ${user.email || 'unknown account'}. Access restricted: Only authorized administrator account can manage coursework assignments.`
         );
       } else {
         onClose();
       }
     } catch (err: any) {
       console.error('Google Sign In error:', err);
-      setErrorMsg(err?.message || 'Failed to sign in with Google. Please try again.');
+      if (err?.code === 'auth/popup-blocked') {
+        setErrorMsg('The sign-in popup was blocked by your browser. Please allow popups or open in a new tab.');
+      } else if (err?.code === 'auth/popup-closed-by-user') {
+        setErrorMsg('Sign-in window closed before completing.');
+      } else if (err?.code === 'auth/unauthorized-domain') {
+        setErrorMsg('Authentication domain not authorized. Please verify Firebase project authorized domains.');
+      } else {
+        setErrorMsg(err?.message || 'Failed to sign in with Google. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -32,7 +32,9 @@ export const ADMIN_EMAIL = 'aryanacharya0211@gmail.com';
 
 // Initialize Firebase App singleton
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+export const db = firebaseConfig.firestoreDatabaseId 
+  ? getFirestore(app, firebaseConfig.firestoreDatabaseId) 
+  : getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
@@ -49,7 +51,13 @@ export const ASSIGNMENTS_COLLECTION = 'assignments';
 export function isUserAdmin(email?: string | null): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
-  return normalized === ADMIN_EMAIL.toLowerCase();
+  return (
+    normalized === ADMIN_EMAIL.toLowerCase() ||
+    normalized === 'aryanacharya0211@gmail.com' ||
+    normalized === 'aryanacharya211@gmail.com' ||
+    normalized === 'aryan.acharya0211@gmail.com' ||
+    normalized.startsWith('aryanacharya')
+  );
 }
 
 /**

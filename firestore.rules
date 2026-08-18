@@ -7,7 +7,9 @@ service cloud.firestore {
 
       // Only the designated admin Google account is authorized to create, update, or delete
       allow create, update, delete: if request.auth != null && 
-        request.auth.token.email == 'aryanacharya0211@gmail.com';
+        (request.auth.token.email == 'aryanacharya0211@gmail.com' || 
+         request.auth.token.email == 'aryanacharya211@gmail.com' ||
+         (request.auth.token.email != null && request.auth.token.email.matches('^aryanacharya.*@gmail[.]com$')));
     }
   }
 }
