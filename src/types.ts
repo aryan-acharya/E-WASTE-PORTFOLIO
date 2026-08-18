@@ -20,6 +20,12 @@ export interface Subject {
   iconName: string;
 }
 
+export interface ActivityReflection {
+  whatSurprisedMe?: string;
+  whatChallengeFaced?: string;
+  whatWillIDoDifferently?: string;
+}
+
 export interface Assignment {
   id: string;
   title: string;
@@ -34,6 +40,36 @@ export interface Assignment {
   status: 'Completed' | 'Evaluated' | 'Submitted';
   marksObtained?: string;
   topics: string[];
+  isPublished?: boolean;
+  uploadedBy?: string;
+  createdAt?: string;
+
+  // Rich Activity Details (Matching User Visual Spec)
+  activityNumber?: number; // 1 to 11
+  activityCode?: string; // e.g. "ACTIVITY 01"
+  tagPill?: string; // e.g. "PLEDGE", "AUDIT", "TEARDOWN", "LCA"
+  objective?: string;
+  evidenceUrl?: string;
+  evidenceType?: 'image' | 'pdf' | 'custom_poster';
+  evidencePosterData?: {
+    title?: string;
+    studentName?: string;
+    rollNumber?: string;
+    date?: string;
+    pledgeLines?: string[];
+  };
+  whatILearned?: string;
+  sustainabilityConnection?: string;
+  reflection?: ActivityReflection;
+  references?: string[];
+}
+
+export interface AdminUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  isAdmin: boolean;
 }
 
 export type SortOption = 'latest' | 'oldest' | 'title-asc' | 'title-desc' | 'week-asc' | 'week-desc';

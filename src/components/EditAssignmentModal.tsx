@@ -1,104 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
-  Upload, 
-  PlusCircle, 
-  FileText, 
-  CheckCircle2, 
+  Edit3, 
+  Save, 
   AlertCircle, 
+  FileUp, 
+  CheckCircle2, 
   Tag, 
-  Calendar, 
-  Award, 
-  BookOpen, 
-  Sparkles,
-  Paperclip,
-  FileUp,
-  Image,
+  Calendar,
   Layers,
-  Lightbulb,
-  ExternalLink
+  BookOpen,
+  Lightbulb
 } from 'lucide-react';
 import { Assignment, AssignmentType, SubjectName, ActivityReflection } from '../types';
 import { uploadPdfDocument } from '../lib/firebase';
 
-interface AddAssignmentModalProps {
+interface EditAssignmentModalProps {
+  assignment: Assignment | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddAssignment: (assignment: Assignment) => Promise<void>;
+  onUpdateAssignment: (updated: Assignment) => Promise<void>;
 }
 
-export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
+export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({
+  assignment,
   isOpen,
   onClose,
-  onAddAssignment
+  onUpdateAssignment
 }) => {
-  // Navigation tabs inside modal for organized data entry
   const [activeTab, setActiveTab] = useState<'basic' | 'activity' | 'reflection'>('basic');
 
   // Basic Info
   const [activityNumber, setActivityNumber] = useState<number>(1);
   const [tagPill, setTagPill] = useState<string>('PLEDGE');
-  const [title, setTitle] = useState('ACTIVITY 01: E-WASTE & ENVIRONMENTAL MANAGEMENT PLEDGE');
+  const [title, setTitle] = useState('');
   const [subject, setSubject] = useState<SubjectName>('E-Waste & Environmental Management');
   const [type, setType] = useState<AssignmentType>('Activity');
   const [weekNumber, setWeekNumber] = useState<number>(1);
-  const [submissionDate, setSubmissionDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [submissionDate, setSubmissionDate] = useState<string>('');
   const [status, setStatus] = useState<'Submitted' | 'Completed' | 'Evaluated'>('Evaluated');
-  const [marksObtained, setMarksObtained] = useState('10/10');
+  const [marksObtained, setMarksObtained] = useState('');
   const [description, setDescription] = useState('');
-  const [topicsInput, setTopicsInput] = useState('E-Waste Pledge, Circular Economy, Sustainability');
+  const [topicsInput, setTopicsInput] = useState('');
 
-  // Rich Activity Spec (Screenshot fields)
-  const [objective, setObjective] = useState(
-    'To establish a personal and technical commitment toward mitigating electronic waste, promoting circular electronics lifecycles, and documenting responsible hardware disposition across IT systems.'
-  );
+  // Rich Activity Spec
+  const [objective, setObjective] = useState('');
   const [evidenceType, setEvidenceType] = useState<'custom_poster' | 'image' | 'pdf'>('custom_poster');
   const [evidenceUrl, setEvidenceUrl] = useState('');
-  const [whatILearned, setWhatILearned] = useState(
-    'Through analyzing global e-waste trajectories, I learned that improper hardware disposal releases toxic heavy metals such as lead, mercury, and cadmium into ground soil while exhausting non-renewable rare earth minerals. Understanding the end-to-end lifecycle of consumer electronics reveals that hardware longevity is heavily dictated by software optimization, repairability, and modular system design.'
-  );
-  const [sustainabilityConnection, setSustainabilityConnection] = useState(
-    'This activity helps reduce e-waste by establishing strict guidelines for modular system design, hardware component recycling, and software optimization that prevents functional devices from being rendered obsolete by heavy software bloat.'
-  );
+  const [whatILearned, setWhatILearned] = useState('');
+  const [sustainabilityConnection, setSustainabilityConnection] = useState('');
   
   // Reflections
-  const [whatSurprisedMe, setWhatSurprisedMe] = useState(
-    'The sheer volume of perfectly functional electronic hardware discarded globally every year simply due to unoptimized software updates and lack of documentation.'
-  );
-  const [whatChallengeFaced, setWhatChallengeFaced] = useState(
-    'Balancing peak computational performance requirements with low-energy, sustainable hardware utilization across modern development environments.'
-  );
-  const [whatWillIDoDifferently, setWhatWillIDoDifferently] = useState(
-    'Prioritize lightweight software architectures, advocate for repairable hardware standards, and champion technical documentation for long-term device maintenance.'
-  );
+  const [whatSurprisedMe, setWhatSurprisedMe] = useState('');
+  const [whatChallengeFaced, setWhatChallengeFaced] = useState('');
+  const [whatWillIDoDifferently, setWhatWillIDoDifferently] = useState('');
 
   // References
-  const [referencesInput, setReferencesInput] = useState(
-    'UNEP Global E-Waste Monitor Report\nBasel Action Network (BAN) E-Waste Standards\nIEEE Sustainable Systems & Hardware Engineering'
-  );
+  const [referencesInput, setReferencesInput] = useState('');
 
-  // Files
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  // File
   const [pdfUrlInput, setPdfUrlInput] = useState('');
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (assignment) {
+      setActivityNumber(assignment.activityNumber || 1);
+      setTagPill(assignment.tagPill || assignment.type.toUpperCase());
+      setTitle(assignment.title);
+      setSubject(assignment.subject);
+      setType(assignment.type);
+      setWeekNumber(assignment.weekNumber);
+      setSubmissionDate(assignment.submissionDate);
+      setStatus(assignment.status);
+      setMarksObtained(assignment.marksObtained || '');
+      setDescription(assignment.description);
+      setTopicsInput(assignment.topics?.join(', ') || '');
+      setObjective(assignment.objective || assignment.description || '');
+      setEvidenceType(assignment.evidenceType || (assignment.id === 'activity-01' ? 'custom_poster' : 'pdf'));
+      setEvidenceUrl(assignment.evidenceUrl || '');
+      setWhatILearned(assignment.whatILearned || '');
+      setSustainabilityConnection(assignment.sustainabilityConnection || '');
+      setWhatSurprisedMe(assignment.reflection?.whatSurprisedMe || '');
+      setWhatChallengeFaced(assignment.reflection?.whatChallengeFaced || '');
+      setWhatWillIDoDifferently(assignment.reflection?.whatWillIDoDifferently || '');
+      setReferencesInput(assignment.references?.join('\n') || '');
+      setPdfUrlInput(assignment.pdfUrl);
+      setPdfFile(null);
+      setErrorMsg('');
+    }
+  }, [assignment, isOpen]);
+
+  if (!isOpen || !assignment) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setPdfFile(file);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setPdfFile(e.dataTransfer.files[0]);
+      setPdfFile(e.target.files[0]);
     }
   };
 
@@ -106,7 +105,7 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
     e.preventDefault();
 
     if (!title.trim()) {
-      setErrorMsg('Please enter an assignment title.');
+      setErrorMsg('Please provide a title.');
       return;
     }
 
@@ -114,36 +113,27 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
     setErrorMsg('');
 
     try {
-      // Determine PDF URL and file size
-      let pdfUrl = 'https://cdn.jsdelivr.net/gh/mozilla/pdf.js@master/web/compressed.tracemonkey-pldi-09.pdf';
-      let fileSize = '1.8 MB';
+      let finalPdfUrl = pdfUrlInput.trim() || assignment.pdfUrl;
+      let finalFileSize = assignment.fileSize;
 
       if (pdfFile) {
         try {
           const uploadResult = await uploadPdfDocument(pdfFile);
-          pdfUrl = uploadResult.pdfUrl;
-          fileSize = uploadResult.fileSize;
+          finalPdfUrl = uploadResult.pdfUrl;
+          finalFileSize = uploadResult.fileSize;
         } catch (uploadErr: any) {
           console.warn('PDF upload warning:', uploadErr);
-          if (pdfUrlInput.trim()) {
-            pdfUrl = pdfUrlInput.trim();
-            fileSize = 'Custom PDF';
-          } else {
+          if (!pdfUrlInput.trim()) {
             throw uploadErr;
           }
         }
-      } else if (pdfUrlInput.trim()) {
-        pdfUrl = pdfUrlInput.trim();
-        fileSize = 'Custom PDF';
       }
 
-      // Parse topics
       const topics = topicsInput
         .split(',')
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
-      // Parse references
       const references = referencesInput
         .split('\n')
         .map((r) => r.trim())
@@ -151,8 +141,8 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
 
       const activityCode = `ACTIVITY ${String(activityNumber).padStart(2, '0')}`;
 
-      const newAssignment: Assignment = {
-        id: `activity-${String(activityNumber).padStart(2, '0')}-${Date.now()}`,
+      const updatedAssignment: Assignment = {
+        ...assignment,
         activityNumber,
         activityCode,
         tagPill: tagPill.trim().toUpperCase() || 'ACTIVITY',
@@ -160,9 +150,9 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
         subject,
         weekNumber: Number(weekNumber) || 1,
         submissionDate,
-        description: description.trim() || objective.trim() || 'Course activity submission.',
-        pdfUrl,
-        fileSize,
+        description: description.trim() || objective.trim(),
+        pdfUrl: finalPdfUrl,
+        fileSize: finalFileSize,
         type,
         category: type === 'Report' ? 'Reports' : type === 'Research' ? 'Research' : type === 'Activity' ? 'Activities' : type === 'Presentation' ? 'Presentations' : 'Practicals',
         status,
@@ -171,37 +161,21 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
         objective: objective.trim(),
         evidenceType,
         evidenceUrl: evidenceUrl.trim() || undefined,
-        evidencePosterData: evidenceType === 'custom_poster' ? {
-          title: 'MY COMMITMENT TO A SUSTAINABLE FUTURE',
-          studentName: 'Aryan Acharya',
-          rollNumber: '24101C0041',
-          date: submissionDate,
-          pledgeLines: [
-            'I pledge to be a responsible engineer 👩‍💻 and a conscious citizen 🌍.',
-            '♻️ I will use technology wisely.',
-            '🌱 I will reduce waste and conserve resources.',
-            '📱 I will dispose of e-waste responsibly.',
-            '💡 I will embrace sustainable practices in my personal and professional life.',
-            '🤝 I will inspire others to protect and care for our environment.',
-            "Together, let's build a cleaner, greener, and more sustainable future! 🌍✨"
-          ]
-        } : undefined,
         whatILearned: whatILearned.trim(),
         sustainabilityConnection: sustainabilityConnection.trim(),
         reflection: {
           whatSurprisedMe: whatSurprisedMe.trim(),
           whatChallengeFaced: whatChallengeFaced.trim(),
-          whatWillIDoDifferently: whatWillIDoDifferently.trim(),
+          whatWillIDoDifferently: whatWillIDoDifferently.trim()
         },
-        references: references.length > 0 ? references : undefined,
-        isPublished: true
+        references: references.length > 0 ? references : undefined
       };
 
-      await onAddAssignment(newAssignment);
+      await onUpdateAssignment(updatedAssignment);
       onClose();
     } catch (err: any) {
-      console.error('Error adding assignment:', err);
-      setErrorMsg(err?.message || 'Failed to process assignment. Please try again.');
+      console.error('Update assignment error:', err);
+      setErrorMsg(err?.message || 'Failed to update assignment.');
     } finally {
       setIsSubmitting(false);
     }
@@ -231,14 +205,14 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
           <div className="p-5 sm:p-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <PlusCircle className="w-6 h-6" />
+                <Edit3 className="w-6 h-6" />
               </div>
               <div>
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
-                  Curriculum Activity Setup
+                  Administrator Edit Panel
                 </span>
                 <h3 className="text-xl font-extrabold text-white tracking-tight">
-                  Add Activity / Assignment
+                  Edit Activity Details
                 </h3>
               </div>
             </div>
@@ -263,7 +237,7 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
               }`}
             >
               <Layers className="w-4 h-4" />
-              <span>1. General & Code</span>
+              <span>1. General</span>
             </button>
             <button
               type="button"
@@ -306,25 +280,21 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Activity Number (1 - 11+)
+                      Activity Number
                     </label>
                     <input
                       type="number"
                       min="1"
                       max="50"
                       value={activityNumber}
-                      onChange={(e) => {
-                        const num = parseInt(e.target.value) || 1;
-                        setActivityNumber(num);
-                        setTitle(`ACTIVITY ${String(num).padStart(2, '0')}: `);
-                      }}
+                      onChange={(e) => setActivityNumber(parseInt(e.target.value) || 1)}
                       className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-mono text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Tag / Badge (e.g. PLEDGE, LCA)
+                      Tag / Badge
                     </label>
                     <input
                       type="text"
@@ -353,22 +323,19 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                   </div>
                 </div>
 
-                {/* Full Activity Title */}
                 <div>
                   <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    1. Activity Title <span className="text-rose-500">*</span>
+                    Activity Title <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="ACTIVITY 01: E-WASTE & ENVIRONMENTAL MANAGEMENT PLEDGE"
                     className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
                     required
                   />
                 </div>
 
-                {/* Week, Submission Date, Marks Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
@@ -421,16 +388,14 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                   </div>
                 </div>
 
-                {/* Topics / Keywords */}
                 <div>
                   <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Topics & Keywords (Comma-Separated)
+                    Topics & Keywords
                   </label>
                   <input
                     type="text"
                     value={topicsInput}
                     onChange={(e) => setTopicsInput(e.target.value)}
-                    placeholder="e.g., Sustainability Pledge, E-Waste Awareness, Circular Economy"
                     className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -440,7 +405,6 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
             {/* TAB 2: OBJECTIVE & EVIDENCE */}
             {activeTab === 'activity' && (
               <div className="space-y-5">
-                {/* 02. OBJECTIVE */}
                 <div>
                   <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
                     02. OBJECTIVE
@@ -449,12 +413,10 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                     rows={3}
                     value={objective}
                     onChange={(e) => setObjective(e.target.value)}
-                    placeholder="To establish a personal and technical commitment toward mitigating electronic waste..."
                     className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
                   />
                 </div>
 
-                {/* 03. EVIDENCE */}
                 <div className="space-y-3 pt-2">
                   <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
                     03. EVIDENCE PRESENTATION FORMAT
@@ -471,7 +433,6 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                       }`}
                     >
                       <span>📜 Pledge Poster</span>
-                      <span className="text-[10px] text-slate-500">Render Graphic</span>
                     </button>
 
                     <button
@@ -484,7 +445,6 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                       }`}
                     >
                       <span>🖼️ Evidence Image</span>
-                      <span className="text-[10px] text-slate-500">Teardown / Photo</span>
                     </button>
 
                     <button
@@ -497,11 +457,9 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                       }`}
                     >
                       <span>📄 PDF Document</span>
-                      <span className="text-[10px] text-slate-500">Direct File View</span>
                     </button>
                   </div>
 
-                  {/* Evidence URL / Image URL input */}
                   {evidenceType === 'image' && (
                     <div>
                       <label className="block text-xs font-mono text-slate-400 mb-1">
@@ -511,40 +469,26 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                         type="url"
                         value={evidenceUrl}
                         onChange={(e) => setEvidenceUrl(e.target.value)}
-                        placeholder="https://images.unsplash.com/... or public image URL"
+                        placeholder="https://images.unsplash.com/..."
                         className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   )}
 
-                  {/* PDF Document Upload Zone */}
                   <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-2">
-                      PDF Document Attachment (Optional)
+                    <label className="block text-xs font-mono text-slate-400 mb-1">
+                      Update Attached PDF
                     </label>
-                    <div
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={handleDrop}
-                      className="p-4 border border-dashed border-slate-800 hover:border-emerald-500 rounded-xl bg-slate-950 text-center transition-colors relative cursor-pointer group"
-                    >
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileChange}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
-                      <div className="flex items-center justify-center gap-3">
-                        <FileUp className="w-5 h-5 text-emerald-400" />
-                        <span className="text-xs text-slate-300 font-mono">
-                          {pdfFile ? `Attached: ${pdfFile.name}` : 'Click or drop PDF document file'}
-                        </span>
-                      </div>
-                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileChange}
+                      className="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-950 file:text-emerald-300 cursor-pointer"
+                    />
                   </div>
                 </div>
 
-                {/* 05. SUSTAINABILITY CONNECTION */}
-                <div className="pt-2">
+                <div>
                   <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
                     05. SUSTAINABILITY CONNECTION
                   </label>
@@ -552,7 +496,6 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                     rows={3}
                     value={sustainabilityConnection}
                     onChange={(e) => setSustainabilityConnection(e.target.value)}
-                    placeholder="This activity helps reduce e-waste by establishing strict guidelines..."
                     className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
                   />
                 </div>
@@ -562,7 +505,6 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
             {/* TAB 3: LEARNINGS & REFLECTION */}
             {activeTab === 'reflection' && (
               <div className="space-y-5">
-                {/* 04. WHAT I LEARNED */}
                 <div>
                   <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
                     04. WHAT I LEARNED (~150 WORDS)
@@ -571,12 +513,10 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                     rows={4}
                     value={whatILearned}
                     onChange={(e) => setWhatILearned(e.target.value)}
-                    placeholder="Through analyzing global e-waste trajectories, I learned that..."
                     className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
                   />
                 </div>
 
-                {/* 06. REFLECTIONS */}
                 <div className="space-y-4 pt-2">
                   <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
                     06. REFLECTION QUESTIONS
@@ -619,8 +559,7 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                   </div>
                 </div>
 
-                {/* 07. REFERENCES */}
-                <div className="pt-2">
+                <div>
                   <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
                     07. REFERENCES (ONE PER LINE)
                   </label>
@@ -628,7 +567,6 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                     rows={3}
                     value={referencesInput}
                     onChange={(e) => setReferencesInput(e.target.value)}
-                    placeholder="UNEP Global E-Waste Monitor Report&#10;Basel Action Network (BAN) E-Waste Standards&#10;IEEE Sustainable Systems & Hardware Engineering"
                     className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -642,25 +580,13 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
               </div>
 
               <div className="flex items-center gap-3">
-                {activeTab !== 'basic' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab(activeTab === 'reflection' ? 'activity' : 'basic')}
-                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs border border-slate-800"
-                  >
-                    Back
-                  </button>
-                )}
-
-                {activeTab !== 'reflection' ? (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab(activeTab === 'basic' ? 'activity' : 'reflection')}
-                    className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs font-bold"
-                  >
-                    Next Step →
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs font-mono"
+                >
+                  Cancel
+                </button>
 
                 <button
                   type="submit"
@@ -670,12 +596,12 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                      <span>Saving to Cloud...</span>
+                      <span>Saving Changes...</span>
                     </>
                   ) : (
                     <>
-                      <PlusCircle className="w-4 h-4" />
-                      <span>Publish Activity</span>
+                      <Save className="w-4 h-4" />
+                      <span>Save Changes</span>
                     </>
                   )}
                 </button>

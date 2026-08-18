@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavSection, SubjectName, Assignment } from './types';
+import { NavSection, SubjectName, Assignment, AdminUser } from './types';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { SubjectOverview } from './components/SubjectOverview';
@@ -7,75 +7,73 @@ import { AssignmentsView } from './components/AssignmentsView';
 import { PdfViewerModal } from './components/PdfViewerModal';
 import { FloatingBlobs } from './components/FloatingBlobs';
 import { Footer } from './components/Footer';
-import { ASSIGNMENTS_DATA, SAMPLE_ASSIGNMENTS_DATA } from './lib/data/assignments';
+import { AdminAuthModal } from './components/AdminAuthModal';
+import { SAMPLE_ASSIGNMENTS_DATA } from './lib/data/assignments';
 import { SUBJECTS_DATA } from './lib/data/subjects';
 import { 
   subscribeToAssignments, 
   saveAssignmentToFirestore, 
+  updateAssignmentInFirestore,
   deleteAssignmentFromFirestore,
-  clearAllAssignmentsFromFirestore 
+  subscribeToAuthState
 } from './lib/firebase';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<NavSection>('home');
   const [activePdfAssignment, setActivePdfAssignment] = useState<Assignment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
 
-  // Assignments state
+  // Authentication state
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
+  const isAdmin = currentUser?.isAdmin === true;
+
+  // Assignments state (Persisted in Firestore and synchronized in real-time)
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
-  // Clear existing items once on initial load as requested by user
+  // Listen to Auth State
   useEffect(() => {
-    localStorage.removeItem('ewaste_assignments');
-    clearAllAssignmentsFromFirestore();
+    const unsubscribeAuth = subscribeToAuthState((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribeAuth();
   }, []);
 
   // Real-time Firestore synchronization across all users & devices
   useEffect(() => {
-    const unsubscribe = subscribeToAssignments(
+    const unsubscribeFirestore = subscribeToAssignments(
       (firestoreAssignments) => {
         setAssignments(firestoreAssignments);
-        try {
-          localStorage.setItem('ewaste_assignments', JSON.stringify(firestoreAssignments));
-        } catch (e) {
-          console.warn('LocalStorage save error:', e);
-        }
       },
       (error) => {
         console.warn('Firestore subscription fallback:', error);
       }
     );
 
-    return () => unsubscribe();
+    return () => unsubscribeFirestore();
   }, []);
 
-
+  // Add Assignment (Admin only)
   const handleAddAssignment = async (newAssignment: Assignment) => {
-    // Optimistic UI update
-    setAssignments((prev) => [newAssignment, ...prev.filter(a => a.id !== newAssignment.id)]);
-    // Save to Firestore globally for everyone
-    try {
-      await saveAssignmentToFirestore(newAssignment);
-    } catch (err) {
-      console.error('Failed to sync assignment to Firestore:', err);
-    }
+    await saveAssignmentToFirestore(newAssignment, currentUser?.email);
   };
 
-  const handleDeleteAssignment = async (id: string) => {
-    // Optimistic UI update
-    setAssignments((prev) => prev.filter((a) => a.id !== id));
-    // Remove from Firestore globally
-    try {
-      await deleteAssignmentFromFirestore(id);
-    } catch (err) {
-      console.error('Failed to delete assignment from Firestore:', err);
-    }
+  // Update Assignment (Admin only)
+  const handleUpdateAssignment = async (updatedAssignment: Assignment) => {
+    await updateAssignmentInFirestore(updatedAssignment, currentUser?.email);
   };
 
+  // Delete Assignment (Admin only)
+  const handleDeleteAssignment = async (id: string, pdfUrl?: string) => {
+    await deleteAssignmentFromFirestore(id, pdfUrl, currentUser?.email);
+  };
+
+  // Sample data seeding (Admin only)
   const handleLoadSampleData = async () => {
+    if (!isAdmin) return;
     for (const item of SAMPLE_ASSIGNMENTS_DATA) {
       try {
-        await saveAssignmentToFirestore(item);
+        await saveAssignmentToFirestore(item, currentUser?.email);
       } catch (err) {
         console.error('Failed to load sample data item to Firestore:', err);
       }
@@ -146,6 +144,8 @@ export default function App() {
           }, 150);
         }}
         totalAssignmentsCount={assignments.length}
+        currentUser={currentUser}
+        onOpenAdminAuth={() => setIsAdminAuthModalOpen(true)}
       />
 
       {/* Main Page Content */}
@@ -166,21 +166,31 @@ export default function App() {
         {/* Assignments Archive Section */}
         <AssignmentsView
           assignments={assignments}
+          isAdmin={isAdmin}
           onAddAssignment={handleAddAssignment}
+          onUpdateAssignment={handleUpdateAssignment}
           onDeleteAssignment={handleDeleteAssignment}
-          onLoadSampleData={handleLoadSampleData}
+          onLoadSampleData={isAdmin ? handleLoadSampleData : undefined}
           onViewPdf={(assignment) => setActivePdfAssignment(assignment)}
+          onOpenAdminAuth={() => setIsAdminAuthModalOpen(true)}
           searchQueryProp={searchQuery}
         />
       </main>
 
       {/* Footer */}
-      <Footer />
+      <Footer onOpenAdminAuth={() => setIsAdminAuthModalOpen(true)} />
 
       {/* Interactive PDF Document Reader Modal */}
       <PdfViewerModal
         assignment={activePdfAssignment}
         onClose={() => setActivePdfAssignment(null)}
+      />
+
+      {/* Admin Authentication & Control Portal Modal */}
+      <AdminAuthModal
+        isOpen={isAdminAuthModalOpen}
+        onClose={() => setIsAdminAuthModalOpen(false)}
+        currentUser={currentUser}
       />
     </div>
   );

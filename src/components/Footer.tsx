@@ -1,8 +1,12 @@
 import React from 'react';
-import { ChevronUp, GraduationCap, Heart, Sparkles } from 'lucide-react';
+import { ChevronUp, GraduationCap, Heart, Sparkles, Lock } from 'lucide-react';
 import { PROFILE_DATA } from '../lib/data/profile';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenAdminAuth?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenAdminAuth }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -32,8 +36,20 @@ export const Footer: React.FC = () => {
             <p className="flex items-center justify-center gap-1 font-medium">
               Academic Year {PROFILE_DATA.academicYear} • E-Waste & Environmental Management
             </p>
-            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
-              Specialized Digital Repository for Reports, Research Papers, Practicals & Presentations
+            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
+              <span>Digital Repository for Coursework Submissions</span>
+              {onOpenAdminAuth && (
+                <>
+                  <span>•</span>
+                  <button
+                    onClick={onOpenAdminAuth}
+                    className="hover:text-emerald-500 transition-colors inline-flex items-center gap-1 text-[11px] font-semibold"
+                  >
+                    <Lock className="w-3 h-3 text-emerald-500" />
+                    <span>Admin</span>
+                  </button>
+                </>
+              )}
             </p>
           </div>
 
@@ -54,3 +70,4 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+
