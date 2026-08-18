@@ -27,9 +27,8 @@ import {
 import { Assignment, AdminUser } from '../types';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-// Configured admin email from environment or default
+// Configured admin email - Single Authorized Administrator
 export const ADMIN_EMAIL = 'aryanacharya0211@gmail.com';
-export const ALT_ADMIN_EMAIL = 'aryanacharya211@gmail.com';
 
 // Initialize Firebase App singleton
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -37,6 +36,9 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
 // Constants
 export const ASSIGNMENTS_COLLECTION = 'assignments';
@@ -47,11 +49,7 @@ export const ASSIGNMENTS_COLLECTION = 'assignments';
 export function isUserAdmin(email?: string | null): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
-  return (
-    normalized === ADMIN_EMAIL.toLowerCase() || 
-    normalized === ALT_ADMIN_EMAIL.toLowerCase() ||
-    normalized.startsWith('aryanacharya')
-  );
+  return normalized === ADMIN_EMAIL.toLowerCase();
 }
 
 /**
