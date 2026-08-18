@@ -2,18 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
-  Edit3, 
   Save, 
   AlertCircle, 
   FileUp, 
-  CheckCircle2, 
-  Tag, 
   Calendar,
-  Layers,
-  BookOpen,
-  Lightbulb
+  Lightbulb,
+  Leaf,
+  Sparkles
 } from 'lucide-react';
-import { Assignment, AssignmentType, SubjectName, ActivityReflection } from '../types';
+import { Assignment, AssignmentType, SubjectName } from '../types';
 import { uploadPdfDocument } from '../lib/firebase';
 
 interface EditAssignmentModalProps {
@@ -29,36 +26,20 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({
   onClose,
   onUpdateAssignment
 }) => {
-  const [activeTab, setActiveTab] = useState<'basic' | 'activity' | 'reflection'>('basic');
-
-  // Basic Info
-  const [activityNumber, setActivityNumber] = useState<number>(1);
-  const [tagPill, setTagPill] = useState<string>('PLEDGE');
+  const [activityNumber, setActivityNumber] = useState<number | ''>(1);
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState<SubjectName>('E-Waste & Environmental Management');
   const [type, setType] = useState<AssignmentType>('Activity');
-  const [weekNumber, setWeekNumber] = useState<number>(1);
+  const [weekNumber, setWeekNumber] = useState<number | ''>(1);
   const [submissionDate, setSubmissionDate] = useState<string>('');
   const [status, setStatus] = useState<'Submitted' | 'Completed' | 'Evaluated'>('Evaluated');
-  const [marksObtained, setMarksObtained] = useState('');
   const [description, setDescription] = useState('');
-  const [topicsInput, setTopicsInput] = useState('');
-
-  // Rich Activity Spec
-  const [objective, setObjective] = useState('');
-  const [evidenceType, setEvidenceType] = useState<'custom_poster' | 'image' | 'pdf'>('custom_poster');
-  const [evidenceUrl, setEvidenceUrl] = useState('');
+  
+  // Custom Academic Learning Questions
   const [whatILearned, setWhatILearned] = useState('');
   const [sustainabilityConnection, setSustainabilityConnection] = useState('');
+  const [reflection, setReflection] = useState('');
   
-  // Reflections
-  const [whatSurprisedMe, setWhatSurprisedMe] = useState('');
-  const [whatChallengeFaced, setWhatChallengeFaced] = useState('');
-  const [whatWillIDoDifferently, setWhatWillIDoDifferently] = useState('');
-
-  // References
-  const [referencesInput, setReferencesInput] = useState('');
-
   // File
   const [pdfUrlInput, setPdfUrlInput] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -67,27 +48,22 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({
 
   useEffect(() => {
     if (assignment) {
-      setActivityNumber(assignment.activityNumber || 1);
-      setTagPill(assignment.tagPill || assignment.type.toUpperCase());
-      setTitle(assignment.title);
-      setSubject(assignment.subject);
-      setType(assignment.type);
-      setWeekNumber(assignment.weekNumber);
-      setSubmissionDate(assignment.submissionDate);
-      setStatus(assignment.status);
-      setMarksObtained(assignment.marksObtained || '');
-      setDescription(assignment.description);
-      setTopicsInput(assignment.topics?.join(', ') || '');
-      setObjective(assignment.objective || assignment.description || '');
-      setEvidenceType(assignment.evidenceType || (assignment.id === 'activity-01' ? 'custom_poster' : 'pdf'));
-      setEvidenceUrl(assignment.evidenceUrl || '');
+      setActivityNumber(assignment.activityNumber || assignment.weekNumber || 1);
+      setTitle(assignment.title || '');
+      setSubject(assignment.subject || 'E-Waste & Environmental Management');
+      setType(assignment.type || 'Activity');
+      setWeekNumber(assignment.weekNumber || 1);
+      setSubmissionDate(assignment.submissionDate || new Date().toISOString().split('T')[0]);
+      setStatus(assignment.status || 'Evaluated');
+      setDescription(assignment.description || '');
       setWhatILearned(assignment.whatILearned || '');
       setSustainabilityConnection(assignment.sustainabilityConnection || '');
-      setWhatSurprisedMe(assignment.reflection?.whatSurprisedMe || '');
-      setWhatChallengeFaced(assignment.reflection?.whatChallengeFaced || '');
-      setWhatWillIDoDifferently(assignment.reflection?.whatWillIDoDifferently || '');
-      setReferencesInput(assignment.references?.join('\n') || '');
-      setPdfUrlInput(assignment.pdfUrl);
+      setReflection(
+        typeof assignment.reflection === 'string' 
+          ? assignment.reflection 
+          : ''
+      );
+      setPdfUrlInput(assignment.pdfUrl || '');
       setPdfFile(null);
       setErrorMsg('');
     }
@@ -101,11 +77,18 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({
     }
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setPdfFile(e.dataTransfer.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
-      setErrorMsg('Please provide a title.');
+      setErrorMsg('Please enter an assignment title.');
       return;
     }
 
@@ -122,59 +105,37 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({
           finalPdfUrl = uploadResult.pdfUrl;
           finalFileSize = uploadResult.fileSize;
         } catch (uploadErr: any) {
-          console.warn('PDF upload warning:', uploadErr);
-          if (!pdfUrlInput.trim()) {
-            throw uploadErr;
-          }
+          console.warn('Upload error, using fallback:', uploadErr);
+          if (!finalPdfUrl) throw uploadErr;
         }
       }
 
-      const topics = topicsInput
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0);
-
-      const references = referencesInput
-        .split('\n')
-        .map((r) => r.trim())
-        .filter((r) => r.length > 0);
-
-      const activityCode = `ACTIVITY ${String(activityNumber).padStart(2, '0')}`;
+      const actNum = typeof activityNumber === 'number' ? activityNumber : (assignment.activityNumber || 1);
 
       const updatedAssignment: Assignment = {
         ...assignment,
-        activityNumber,
-        activityCode,
-        tagPill: tagPill.trim().toUpperCase() || 'ACTIVITY',
+        activityNumber: actNum,
+        activityCode: `ACTIVITY ${String(actNum).padStart(2, '0')}`,
+        tagPill: type.toUpperCase(),
         title: title.trim(),
         subject,
-        weekNumber: Number(weekNumber) || 1,
+        type,
+        weekNumber: typeof weekNumber === 'number' ? weekNumber : (assignment.weekNumber || 1),
         submissionDate,
-        description: description.trim() || objective.trim(),
+        status,
+        description: description.trim(),
+        whatILearned: whatILearned.trim() || undefined,
+        sustainabilityConnection: sustainabilityConnection.trim() || undefined,
+        reflection: reflection.trim() || undefined,
         pdfUrl: finalPdfUrl,
         fileSize: finalFileSize,
-        type,
         category: type === 'Report' ? 'Reports' : type === 'Research' ? 'Research' : type === 'Activity' ? 'Activities' : type === 'Presentation' ? 'Presentations' : 'Practicals',
-        status,
-        marksObtained: marksObtained.trim() || undefined,
-        topics: topics.length > 0 ? topics : ['E-Waste', 'Environmental Management'],
-        objective: objective.trim(),
-        evidenceType,
-        evidenceUrl: evidenceUrl.trim() || undefined,
-        whatILearned: whatILearned.trim(),
-        sustainabilityConnection: sustainabilityConnection.trim(),
-        reflection: {
-          whatSurprisedMe: whatSurprisedMe.trim(),
-          whatChallengeFaced: whatChallengeFaced.trim(),
-          whatWillIDoDifferently: whatWillIDoDifferently.trim()
-        },
-        references: references.length > 0 ? references : undefined
       };
 
       await onUpdateAssignment(updatedAssignment);
       onClose();
     } catch (err: any) {
-      console.error('Update assignment error:', err);
+      console.error('Failed to update assignment:', err);
       setErrorMsg(err?.message || 'Failed to update assignment.');
     } finally {
       setIsSubmitting(false);
@@ -183,429 +144,280 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto bg-black/85 backdrop-blur-md">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6">
+        <div 
+          className="fixed inset-0" 
           onClick={onClose}
-          className="fixed inset-0"
+          aria-label="Close modal background"
         />
 
-        {/* Modal Window */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 20 }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-4xl bg-[#0b0e14] text-slate-100 rounded-3xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col my-auto max-h-[92vh] z-10 font-sans"
+          className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 my-auto max-h-[92vh] flex flex-col font-sans"
         >
           {/* Header */}
-          <div className="p-5 sm:p-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-4">
+          <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <Edit3 className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                <Save className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
-                  Administrator Edit Panel
-                </span>
-                <h3 className="text-xl font-extrabold text-white tracking-tight">
-                  Edit Activity Details
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  Edit Coursework Assignment
                 </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Update assignment details, learnings, reflection, or replace the PDF document
+                </p>
               </div>
             </div>
 
             <button
               onClick={onClose}
-              className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-slate-800 bg-slate-900/50 px-6 pt-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab('basic')}
-              className={`px-4 py-3 text-xs font-mono font-bold tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'basic'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>1. General</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('activity')}
-              className={`px-4 py-3 text-xs font-mono font-bold tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'activity'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>2. Objective & Evidence</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('reflection')}
-              className={`px-4 py-3 text-xs font-mono font-bold tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'reflection'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Lightbulb className="w-4 h-4" />
-              <span>3. Learnings & Reflection</span>
-            </button>
-          </div>
-
-          {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+          {/* Form Content */}
+          <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
             {errorMsg && (
-              <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
-            {/* TAB 1: BASIC & CODE */}
-            {activeTab === 'basic' && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Activity Number
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={activityNumber}
-                      onChange={(e) => setActivityNumber(parseInt(e.target.value) || 1)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-mono text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Tag / Badge
-                    </label>
-                    <input
-                      type="text"
-                      value={tagPill}
-                      onChange={(e) => setTagPill(e.target.value)}
-                      placeholder="PLEDGE, TEARDOWN, LCA..."
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-mono text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Category Type
-                    </label>
-                    <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value as AssignmentType)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-mono text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    >
-                      <option value="Activity">Field Activity</option>
-                      <option value="Report">Report</option>
-                      <option value="Research">Research Paper</option>
-                      <option value="Presentation">Presentation</option>
-                      <option value="Practical">Practical Lab</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Activity Title <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Week Number
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={weekNumber}
-                      onChange={(e) => setWeekNumber(parseInt(e.target.value) || 1)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Submission Date
-                    </label>
-                    <input
-                      type="date"
-                      value={submissionDate}
-                      onChange={(e) => setSubmissionDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Status & Marks
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value as any)}
-                        className="w-1/2 px-2 py-3 rounded-xl bg-slate-900 text-white text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      >
-                        <option value="Evaluated">Evaluated</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Submitted">Submitted</option>
-                      </select>
-                      <input
-                        type="text"
-                        value={marksObtained}
-                        onChange={(e) => setMarksObtained(e.target.value)}
-                        placeholder="10/10"
-                        className="w-1/2 px-3 py-3 rounded-xl bg-slate-900 text-white text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Topics & Keywords
-                  </label>
-                  <input
-                    type="text"
-                    value={topicsInput}
-                    onChange={(e) => setTopicsInput(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: OBJECTIVE & EVIDENCE */}
-            {activeTab === 'activity' && (
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    02. OBJECTIVE
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={objective}
-                    onChange={(e) => setObjective(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
-                  />
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                    03. EVIDENCE PRESENTATION FORMAT
-                  </label>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setEvidenceType('custom_poster')}
-                      className={`p-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center gap-1.5 transition-all ${
-                        evidenceType === 'custom_poster'
-                          ? 'border-emerald-400 bg-emerald-950/40 text-emerald-300'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <span>📜 Pledge Poster</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEvidenceType('image')}
-                      className={`p-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center gap-1.5 transition-all ${
-                        evidenceType === 'image'
-                          ? 'border-emerald-400 bg-emerald-950/40 text-emerald-300'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <span>🖼️ Evidence Image</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEvidenceType('pdf')}
-                      className={`p-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center gap-1.5 transition-all ${
-                        evidenceType === 'pdf'
-                          ? 'border-emerald-400 bg-emerald-950/40 text-emerald-300'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <span>📄 PDF Document</span>
-                    </button>
-                  </div>
-
-                  {evidenceType === 'image' && (
-                    <div>
-                      <label className="block text-xs font-mono text-slate-400 mb-1">
-                        Evidence Image URL
-                      </label>
-                      <input
-                        type="url"
-                        value={evidenceUrl}
-                        onChange={(e) => setEvidenceUrl(e.target.value)}
-                        placeholder="https://images.unsplash.com/..."
-                        className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      Update Attached PDF
-                    </label>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileChange}
-                      className="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-950 file:text-emerald-300 cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    05. SUSTAINABILITY CONNECTION
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={sustainabilityConnection}
-                    onChange={(e) => setSustainabilityConnection(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: LEARNINGS & REFLECTION */}
-            {activeTab === 'reflection' && (
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    04. WHAT I LEARNED (~150 WORDS)
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={whatILearned}
-                    onChange={(e) => setWhatILearned(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
-                  />
-                </div>
-
-                <div className="space-y-4 pt-2">
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                    06. REFLECTION QUESTIONS
-                  </label>
-
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      • WHAT SURPRISED ME?
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={whatSurprisedMe}
-                      onChange={(e) => setWhatSurprisedMe(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      • WHAT CHALLENGE DID I FACE?
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={whatChallengeFaced}
-                      onChange={(e) => setWhatChallengeFaced(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      • WHAT WILL I DO DIFFERENTLY?
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={whatWillIDoDifferently}
-                      onChange={(e) => setWhatWillIDoDifferently(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    07. REFERENCES (ONE PER LINE)
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={referencesInput}
-                    onChange={(e) => setReferencesInput(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Modal Actions */}
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <div className="text-xs font-mono text-slate-500">
-                Tab {activeTab === 'basic' ? '1 of 3' : activeTab === 'activity' ? '2 of 3' : '3 of 3'}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Activity Number *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={activityNumber}
+                  onChange={(e) => setActivityNumber(e.target.value === '' ? '' : parseInt(e.target.value))}
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs font-mono"
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Category Type *
+                </label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as AssignmentType)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs font-mono flex items-center gap-2 transition-transform transform active:scale-95 shadow-lg shadow-emerald-500/20"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                      <span>Saving Changes...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>Save Changes</span>
-                    </>
-                  )}
-                </button>
+                  <option value="Activity">Activity</option>
+                  <option value="Practical">Practical</option>
+                  <option value="Research">Research Paper</option>
+                  <option value="Report">Audit Report</option>
+                  <option value="Presentation">Presentation</option>
+                </select>
               </div>
+
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Week Number
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={weekNumber}
+                  onChange={(e) => setWeekNumber(e.target.value === '' ? '' : parseInt(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Assignment Title *
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Course Subject
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value as SubjectName)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Submission Date
+                </label>
+                <input
+                  type="date"
+                  value={submissionDate}
+                  onChange={(e) => setSubmissionDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Description / Objective
+              </label>
+              <textarea
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Assignment description, objective, or summary..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+              />
+            </div>
+
+            {/* Learning Reflection Section */}
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  Coursework Learnings & Reflection
+                </span>
+              </div>
+
+              {/* WHAT I LEARNED */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                  <span>WHAT I LEARNED</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={whatILearned}
+                  onChange={(e) => setWhatILearned(e.target.value)}
+                  placeholder="Key concepts, insights, methodologies, or technical knowledge gained from this activity..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+
+              {/* SUSTAINABILITY CONNECTION */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Leaf className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>SUSTAINABILITY CONNECTION</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={sustainabilityConnection}
+                  onChange={(e) => setSustainabilityConnection(e.target.value)}
+                  placeholder="How this activity connects to environmental sustainability, circular economy, or e-waste reduction..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+
+              {/* REFLECTION */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                  <span>REFLECTION</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={reflection}
+                  onChange={(e) => setReflection(e.target.value)}
+                  placeholder="Personal takeaways, practical challenges, or actions to take forward..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* PDF File / Link */}
+            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                PDF Document
+              </label>
+
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 rounded-2xl p-4 text-center transition-colors bg-slate-50/50 dark:bg-slate-950/50 cursor-pointer"
+                onClick={() => document.getElementById('edit-pdf-upload-input')?.click()}
+              >
+                <input
+                  id="edit-pdf-upload-input"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center mb-1.5">
+                  <FileUp className="w-4 h-4" />
+                </div>
+                {pdfFile ? (
+                  <p className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    New file selected: {pdfFile.name}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Click to replace PDF or drop a new file here
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-400 font-mono">Current PDF link:</span>
+                <input
+                  type="url"
+                  value={pdfUrlInput}
+                  onChange={(e) => setPdfUrlInput(e.target.value)}
+                  placeholder="https://example.com/document.pdf"
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all disabled:opacity-50 font-mono"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
             </div>
           </form>
         </motion.div>

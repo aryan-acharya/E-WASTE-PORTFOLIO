@@ -2,24 +2,16 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
-  Upload, 
   PlusCircle, 
   FileText, 
-  CheckCircle2, 
   AlertCircle, 
-  Tag, 
   Calendar, 
-  Award, 
-  BookOpen, 
-  Sparkles,
-  Paperclip,
   FileUp,
-  Image,
-  Layers,
   Lightbulb,
-  ExternalLink
+  Leaf,
+  Sparkles
 } from 'lucide-react';
-import { Assignment, AssignmentType, SubjectName, ActivityReflection } from '../types';
+import { Assignment, AssignmentType, SubjectName } from '../types';
 import { uploadPdfDocument } from '../lib/firebase';
 
 interface AddAssignmentModalProps {
@@ -33,53 +25,22 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
   onClose,
   onAddAssignment
 }) => {
-  // Navigation tabs inside modal for organized data entry
-  const [activeTab, setActiveTab] = useState<'basic' | 'activity' | 'reflection'>('basic');
-
-  // Basic Info
-  const [activityNumber, setActivityNumber] = useState<number>(1);
-  const [tagPill, setTagPill] = useState<string>('PLEDGE');
-  const [title, setTitle] = useState('ACTIVITY 01: E-WASTE & ENVIRONMENTAL MANAGEMENT PLEDGE');
+  const [activityNumber, setActivityNumber] = useState<number | ''>(1);
+  const [title, setTitle] = useState('');
   const [subject, setSubject] = useState<SubjectName>('E-Waste & Environmental Management');
   const [type, setType] = useState<AssignmentType>('Activity');
-  const [weekNumber, setWeekNumber] = useState<number>(1);
+  const [weekNumber, setWeekNumber] = useState<number | ''>(1);
   const [submissionDate, setSubmissionDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
   const [status, setStatus] = useState<'Submitted' | 'Completed' | 'Evaluated'>('Evaluated');
-  const [marksObtained, setMarksObtained] = useState('10/10');
   const [description, setDescription] = useState('');
-  const [topicsInput, setTopicsInput] = useState('E-Waste Pledge, Circular Economy, Sustainability');
-
-  // Rich Activity Spec (Screenshot fields)
-  const [objective, setObjective] = useState(
-    'To establish a personal and technical commitment toward mitigating electronic waste, promoting circular electronics lifecycles, and documenting responsible hardware disposition across IT systems.'
-  );
-  const [evidenceType, setEvidenceType] = useState<'custom_poster' | 'image' | 'pdf'>('custom_poster');
-  const [evidenceUrl, setEvidenceUrl] = useState('');
-  const [whatILearned, setWhatILearned] = useState(
-    'Through analyzing global e-waste trajectories, I learned that improper hardware disposal releases toxic heavy metals such as lead, mercury, and cadmium into ground soil while exhausting non-renewable rare earth minerals. Understanding the end-to-end lifecycle of consumer electronics reveals that hardware longevity is heavily dictated by software optimization, repairability, and modular system design.'
-  );
-  const [sustainabilityConnection, setSustainabilityConnection] = useState(
-    'This activity helps reduce e-waste by establishing strict guidelines for modular system design, hardware component recycling, and software optimization that prevents functional devices from being rendered obsolete by heavy software bloat.'
-  );
   
-  // Reflections
-  const [whatSurprisedMe, setWhatSurprisedMe] = useState(
-    'The sheer volume of perfectly functional electronic hardware discarded globally every year simply due to unoptimized software updates and lack of documentation.'
-  );
-  const [whatChallengeFaced, setWhatChallengeFaced] = useState(
-    'Balancing peak computational performance requirements with low-energy, sustainable hardware utilization across modern development environments.'
-  );
-  const [whatWillIDoDifferently, setWhatWillIDoDifferently] = useState(
-    'Prioritize lightweight software architectures, advocate for repairable hardware standards, and champion technical documentation for long-term device maintenance.'
-  );
-
-  // References
-  const [referencesInput, setReferencesInput] = useState(
-    'UNEP Global E-Waste Monitor Report\nBasel Action Network (BAN) E-Waste Standards\nIEEE Sustainable Systems & Hardware Engineering'
-  );
-
+  // Custom Academic Learning Questions
+  const [whatILearned, setWhatILearned] = useState('');
+  const [sustainabilityConnection, setSustainabilityConnection] = useState('');
+  const [reflection, setReflection] = useState('');
+  
   // Files
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUrlInput, setPdfUrlInput] = useState('');
@@ -114,9 +75,8 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
     setErrorMsg('');
 
     try {
-      // Determine PDF URL and file size
       let pdfUrl = 'https://cdn.jsdelivr.net/gh/mozilla/pdf.js@master/web/compressed.tracemonkey-pldi-09.pdf';
-      let fileSize = '1.8 MB';
+      let fileSize = '1.2 MB';
 
       if (pdfFile) {
         try {
@@ -124,7 +84,7 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
           pdfUrl = uploadResult.pdfUrl;
           fileSize = uploadResult.fileSize;
         } catch (uploadErr: any) {
-          console.warn('PDF upload warning:', uploadErr);
+          console.warn('PDF upload error:', uploadErr);
           if (pdfUrlInput.trim()) {
             pdfUrl = pdfUrlInput.trim();
             fileSize = 'Custom PDF';
@@ -134,74 +94,47 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
         }
       } else if (pdfUrlInput.trim()) {
         pdfUrl = pdfUrlInput.trim();
-        fileSize = 'Custom PDF';
+        fileSize = 'Document Link';
       }
 
-      // Parse topics
-      const topics = topicsInput
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0);
-
-      // Parse references
-      const references = referencesInput
-        .split('\n')
-        .map((r) => r.trim())
-        .filter((r) => r.length > 0);
-
-      const activityCode = `ACTIVITY ${String(activityNumber).padStart(2, '0')}`;
+      const actNum = typeof activityNumber === 'number' ? activityNumber : 1;
+      const activityCode = `ACTIVITY ${String(actNum).padStart(2, '0')}`;
 
       const newAssignment: Assignment = {
-        id: `activity-${String(activityNumber).padStart(2, '0')}-${Date.now()}`,
-        activityNumber,
+        id: `activity-${String(actNum).padStart(2, '0')}-${Date.now()}`,
+        activityNumber: actNum,
         activityCode,
-        tagPill: tagPill.trim().toUpperCase() || 'ACTIVITY',
+        tagPill: type.toUpperCase(),
         title: title.trim(),
         subject,
-        weekNumber: Number(weekNumber) || 1,
+        weekNumber: typeof weekNumber === 'number' ? weekNumber : actNum,
         submissionDate,
-        description: description.trim() || objective.trim() || 'Course activity submission.',
+        description: description.trim(),
+        whatILearned: whatILearned.trim() || undefined,
+        sustainabilityConnection: sustainabilityConnection.trim() || undefined,
+        reflection: reflection.trim() || undefined,
         pdfUrl,
         fileSize,
         type,
         category: type === 'Report' ? 'Reports' : type === 'Research' ? 'Research' : type === 'Activity' ? 'Activities' : type === 'Presentation' ? 'Presentations' : 'Practicals',
         status,
-        marksObtained: marksObtained.trim() || undefined,
-        topics: topics.length > 0 ? topics : ['E-Waste', 'Environmental Management'],
-        objective: objective.trim(),
-        evidenceType,
-        evidenceUrl: evidenceUrl.trim() || undefined,
-        evidencePosterData: evidenceType === 'custom_poster' ? {
-          title: 'MY COMMITMENT TO A SUSTAINABLE FUTURE',
-          studentName: 'Aryan Acharya',
-          rollNumber: '24101C0041',
-          date: submissionDate,
-          pledgeLines: [
-            'I pledge to be a responsible engineer 👩‍💻 and a conscious citizen 🌍.',
-            '♻️ I will use technology wisely.',
-            '🌱 I will reduce waste and conserve resources.',
-            '📱 I will dispose of e-waste responsibly.',
-            '💡 I will embrace sustainable practices in my personal and professional life.',
-            '🤝 I will inspire others to protect and care for our environment.',
-            "Together, let's build a cleaner, greener, and more sustainable future! 🌍✨"
-          ]
-        } : undefined,
-        whatILearned: whatILearned.trim(),
-        sustainabilityConnection: sustainabilityConnection.trim(),
-        reflection: {
-          whatSurprisedMe: whatSurprisedMe.trim(),
-          whatChallengeFaced: whatChallengeFaced.trim(),
-          whatWillIDoDifferently: whatWillIDoDifferently.trim(),
-        },
-        references: references.length > 0 ? references : undefined,
         isPublished: true
       };
 
       await onAddAssignment(newAssignment);
       onClose();
+      
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setWhatILearned('');
+      setSustainabilityConnection('');
+      setReflection('');
+      setPdfFile(null);
+      setPdfUrlInput('');
     } catch (err: any) {
-      console.error('Error adding assignment:', err);
-      setErrorMsg(err?.message || 'Failed to process assignment. Please try again.');
+      console.error('Failed to add assignment:', err);
+      setErrorMsg(err?.message || 'Failed to save assignment. Please check all fields.');
     } finally {
       setIsSubmitting(false);
     }
@@ -209,477 +142,295 @@ export const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto bg-black/85 backdrop-blur-md">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6">
+        <div 
+          className="fixed inset-0" 
           onClick={onClose}
-          className="fixed inset-0"
+          aria-label="Close modal background"
         />
 
-        {/* Modal Window */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 20 }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-4xl bg-[#0b0e14] text-slate-100 rounded-3xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col my-auto max-h-[92vh] z-10 font-sans"
+          className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 my-auto max-h-[92vh] flex flex-col font-sans"
         >
           {/* Header */}
-          <div className="p-5 sm:p-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-4">
+          <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <PlusCircle className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                <PlusCircle className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
-                  Curriculum Activity Setup
-                </span>
-                <h3 className="text-xl font-extrabold text-white tracking-tight">
-                  Add Activity / Assignment
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  Add Coursework Assignment
                 </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Enter your assignment details, learnings, reflection, and upload your PDF submission
+                </p>
               </div>
             </div>
 
             <button
               onClick={onClose}
-              className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-slate-800 bg-slate-900/50 px-6 pt-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab('basic')}
-              className={`px-4 py-3 text-xs font-mono font-bold tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'basic'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>1. General & Code</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('activity')}
-              className={`px-4 py-3 text-xs font-mono font-bold tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'activity'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>2. Objective & Evidence</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('reflection')}
-              className={`px-4 py-3 text-xs font-mono font-bold tracking-wider uppercase border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'reflection'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Lightbulb className="w-4 h-4" />
-              <span>3. Learnings & Reflection</span>
-            </button>
-          </div>
-
-          {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+          {/* Form Content */}
+          <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
             {errorMsg && (
-              <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
-            {/* TAB 1: BASIC & CODE */}
-            {activeTab === 'basic' && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Activity Number (1 - 11+)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={activityNumber}
-                      onChange={(e) => {
-                        const num = parseInt(e.target.value) || 1;
-                        setActivityNumber(num);
-                        setTitle(`ACTIVITY ${String(num).padStart(2, '0')}: `);
-                      }}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-mono text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Tag / Badge (e.g. PLEDGE, LCA)
-                    </label>
-                    <input
-                      type="text"
-                      value={tagPill}
-                      onChange={(e) => setTagPill(e.target.value)}
-                      placeholder="PLEDGE, TEARDOWN, LCA..."
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-mono text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Category Type
-                    </label>
-                    <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value as AssignmentType)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-mono text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    >
-                      <option value="Activity">Field Activity</option>
-                      <option value="Report">Report</option>
-                      <option value="Research">Research Paper</option>
-                      <option value="Presentation">Presentation</option>
-                      <option value="Practical">Practical Lab</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Full Activity Title */}
-                <div>
-                  <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    1. Activity Title <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="ACTIVITY 01: E-WASTE & ENVIRONMENTAL MANAGEMENT PLEDGE"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
-                    required
-                  />
-                </div>
-
-                {/* Week, Submission Date, Marks Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Week Number
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={weekNumber}
-                      onChange={(e) => setWeekNumber(parseInt(e.target.value) || 1)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Submission Date
-                    </label>
-                    <input
-                      type="date"
-                      value={submissionDate}
-                      onChange={(e) => setSubmissionDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                      Status & Marks
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value as any)}
-                        className="w-1/2 px-2 py-3 rounded-xl bg-slate-900 text-white text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      >
-                        <option value="Evaluated">Evaluated</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Submitted">Submitted</option>
-                      </select>
-                      <input
-                        type="text"
-                        value={marksObtained}
-                        onChange={(e) => setMarksObtained(e.target.value)}
-                        placeholder="10/10"
-                        className="w-1/2 px-3 py-3 rounded-xl bg-slate-900 text-white text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Topics / Keywords */}
-                <div>
-                  <label className="block text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Topics & Keywords (Comma-Separated)
-                  </label>
-                  <input
-                    type="text"
-                    value={topicsInput}
-                    onChange={(e) => setTopicsInput(e.target.value)}
-                    placeholder="e.g., Sustainability Pledge, E-Waste Awareness, Circular Economy"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: OBJECTIVE & EVIDENCE */}
-            {activeTab === 'activity' && (
-              <div className="space-y-5">
-                {/* 02. OBJECTIVE */}
-                <div>
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    02. OBJECTIVE
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={objective}
-                    onChange={(e) => setObjective(e.target.value)}
-                    placeholder="To establish a personal and technical commitment toward mitigating electronic waste..."
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
-                  />
-                </div>
-
-                {/* 03. EVIDENCE */}
-                <div className="space-y-3 pt-2">
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                    03. EVIDENCE PRESENTATION FORMAT
-                  </label>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setEvidenceType('custom_poster')}
-                      className={`p-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center gap-1.5 transition-all ${
-                        evidenceType === 'custom_poster'
-                          ? 'border-emerald-400 bg-emerald-950/40 text-emerald-300'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <span>📜 Pledge Poster</span>
-                      <span className="text-[10px] text-slate-500">Render Graphic</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEvidenceType('image')}
-                      className={`p-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center gap-1.5 transition-all ${
-                        evidenceType === 'image'
-                          ? 'border-emerald-400 bg-emerald-950/40 text-emerald-300'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <span>🖼️ Evidence Image</span>
-                      <span className="text-[10px] text-slate-500">Teardown / Photo</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEvidenceType('pdf')}
-                      className={`p-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center gap-1.5 transition-all ${
-                        evidenceType === 'pdf'
-                          ? 'border-emerald-400 bg-emerald-950/40 text-emerald-300'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <span>📄 PDF Document</span>
-                      <span className="text-[10px] text-slate-500">Direct File View</span>
-                    </button>
-                  </div>
-
-                  {/* Evidence URL / Image URL input */}
-                  {evidenceType === 'image' && (
-                    <div>
-                      <label className="block text-xs font-mono text-slate-400 mb-1">
-                        Evidence Image URL
-                      </label>
-                      <input
-                        type="url"
-                        value={evidenceUrl}
-                        onChange={(e) => setEvidenceUrl(e.target.value)}
-                        placeholder="https://images.unsplash.com/... or public image URL"
-                        className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-                  )}
-
-                  {/* PDF Document Upload Zone */}
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-2">
-                      PDF Document Attachment (Optional)
-                    </label>
-                    <div
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={handleDrop}
-                      className="p-4 border border-dashed border-slate-800 hover:border-emerald-500 rounded-xl bg-slate-950 text-center transition-colors relative cursor-pointer group"
-                    >
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileChange}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
-                      <div className="flex items-center justify-center gap-3">
-                        <FileUp className="w-5 h-5 text-emerald-400" />
-                        <span className="text-xs text-slate-300 font-mono">
-                          {pdfFile ? `Attached: ${pdfFile.name}` : 'Click or drop PDF document file'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 05. SUSTAINABILITY CONNECTION */}
-                <div className="pt-2">
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    05. SUSTAINABILITY CONNECTION
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={sustainabilityConnection}
-                    onChange={(e) => setSustainabilityConnection(e.target.value)}
-                    placeholder="This activity helps reduce e-waste by establishing strict guidelines..."
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: LEARNINGS & REFLECTION */}
-            {activeTab === 'reflection' && (
-              <div className="space-y-5">
-                {/* 04. WHAT I LEARNED */}
-                <div>
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    04. WHAT I LEARNED (~150 WORDS)
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={whatILearned}
-                    onChange={(e) => setWhatILearned(e.target.value)}
-                    placeholder="Through analyzing global e-waste trajectories, I learned that..."
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"
-                  />
-                </div>
-
-                {/* 06. REFLECTIONS */}
-                <div className="space-y-4 pt-2">
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                    06. REFLECTION QUESTIONS
-                  </label>
-
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      • WHAT SURPRISED ME?
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={whatSurprisedMe}
-                      onChange={(e) => setWhatSurprisedMe(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      • WHAT CHALLENGE DID I FACE?
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={whatChallengeFaced}
-                      onChange={(e) => setWhatChallengeFaced(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      • WHAT WILL I DO DIFFERENTLY?
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={whatWillIDoDifferently}
-                      onChange={(e) => setWhatWillIDoDifferently(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                {/* 07. REFERENCES */}
-                <div className="pt-2">
-                  <label className="block text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider mb-2">
-                    07. REFERENCES (ONE PER LINE)
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={referencesInput}
-                    onChange={(e) => setReferencesInput(e.target.value)}
-                    placeholder="UNEP Global E-Waste Monitor Report&#10;Basel Action Network (BAN) E-Waste Standards&#10;IEEE Sustainable Systems & Hardware Engineering"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-xs font-mono border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Modal Actions */}
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <div className="text-xs font-mono text-slate-500">
-                Tab {activeTab === 'basic' ? '1 of 3' : activeTab === 'activity' ? '2 of 3' : '3 of 3'}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Activity Number */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Activity Number *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={activityNumber}
+                  onChange={(e) => setActivityNumber(e.target.value === '' ? '' : parseInt(e.target.value))}
+                  placeholder="1"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
 
-              <div className="flex items-center gap-3">
-                {activeTab !== 'basic' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab(activeTab === 'reflection' ? 'activity' : 'basic')}
-                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs border border-slate-800"
-                  >
-                    Back
-                  </button>
-                )}
-
-                {activeTab !== 'reflection' ? (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab(activeTab === 'basic' ? 'activity' : 'reflection')}
-                    className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs font-bold"
-                  >
-                    Next Step →
-                  </button>
-                ) : null}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs font-mono flex items-center gap-2 transition-transform transform active:scale-95 shadow-lg shadow-emerald-500/20"
+              {/* Category Type */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Category Type *
+                </label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as AssignmentType)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                      <span>Saving to Cloud...</span>
-                    </>
-                  ) : (
-                    <>
-                      <PlusCircle className="w-4 h-4" />
-                      <span>Publish Activity</span>
-                    </>
-                  )}
-                </button>
+                  <option value="Activity">Activity</option>
+                  <option value="Practical">Practical</option>
+                  <option value="Research">Research Paper</option>
+                  <option value="Report">Audit Report</option>
+                  <option value="Presentation">Presentation</option>
+                </select>
               </div>
+
+              {/* Week Number */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Week Number
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={weekNumber}
+                  onChange={(e) => setWeekNumber(e.target.value === '' ? '' : parseInt(e.target.value))}
+                  placeholder="1"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Assignment Title *
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Activity 01: E-Waste Management Pledge"
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Subject */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Course Subject
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value as SubjectName)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Submission Date */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Submission Date
+                </label>
+                <input
+                  type="date"
+                  value={submissionDate}
+                  onChange={(e) => setSubmissionDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Description / Summary */}
+            <div>
+              <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Description / Objective
+              </label>
+              <textarea
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter a brief summary or objective of this assignment..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+              />
+            </div>
+
+            {/* Learning Reflection Section */}
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  Coursework Learnings & Reflection
+                </span>
+              </div>
+
+              {/* WHAT I LEARNED */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                  <span>WHAT I LEARNED</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={whatILearned}
+                  onChange={(e) => setWhatILearned(e.target.value)}
+                  placeholder="Key concepts, insights, methodologies, or technical knowledge gained from completing this activity..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+
+              {/* SUSTAINABILITY CONNECTION */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Leaf className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>SUSTAINABILITY CONNECTION</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={sustainabilityConnection}
+                  onChange={(e) => setSustainabilityConnection(e.target.value)}
+                  placeholder="How this activity connects to environmental sustainability, circular economy, lifecycle assessment, or e-waste mitigation..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+
+              {/* REFLECTION */}
+              <div>
+                <label className="block text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                  <span>REFLECTION</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={reflection}
+                  onChange={(e) => setReflection(e.target.value)}
+                  placeholder="Personal takeaways, practical challenges faced, surprises encountered, or actions to take forward..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* PDF Upload / URL */}
+            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                Assignment PDF Document
+              </label>
+
+              {/* Drag & Drop Box */}
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 rounded-2xl p-5 text-center transition-colors bg-slate-50/50 dark:bg-slate-950/50 cursor-pointer"
+                onClick={() => document.getElementById('pdf-upload-input')?.click()}
+              >
+                <input
+                  id="pdf-upload-input"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center mb-2">
+                  <FileUp className="w-5 h-5" />
+                </div>
+                {pdfFile ? (
+                  <p className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    Selected: {pdfFile.name} ({(pdfFile.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                ) : (
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Click to browse or drag & drop your PDF here
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Supports PDF files up to 20MB
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Or external URL */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-400 font-mono">Or paste link:</span>
+                <input
+                  type="url"
+                  value={pdfUrlInput}
+                  onChange={(e) => setPdfUrlInput(e.target.value)}
+                  placeholder="https://example.com/my-assignment.pdf"
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Footer buttons */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all disabled:opacity-50 font-mono"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="w-4 h-4" />
+                    <span>Add Assignment</span>
+                  </>
+                )}
+              </button>
             </div>
           </form>
         </motion.div>

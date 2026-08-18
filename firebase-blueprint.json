@@ -6,30 +6,32 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "activityNumber": { "type": "number" },
+        "activityCode": { "type": "string" },
         "title": { "type": "string" },
         "subject": { "type": "string" },
         "weekNumber": { "type": "number" },
         "submissionDate": { "type": "string" },
         "description": { "type": "string" },
+        "whatILearned": { "type": "string" },
+        "sustainabilityConnection": { "type": "string" },
+        "reflection": { "type": "string" },
         "pdfUrl": { "type": "string" },
         "fileSize": { "type": "string" },
         "type": { "type": "string" },
         "category": { "type": "string" },
         "status": { "type": "string" },
-        "marksObtained": { "type": "string" },
-        "topics": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
+        "isPublished": { "type": "boolean" },
+        "uploadedBy": { "type": "string" },
         "createdAt": { "type": "string" }
       },
-      "required": ["title", "subject", "weekNumber", "description", "pdfUrl"]
+      "required": ["title", "subject", "pdfUrl"]
     }
   },
   "firestore": {
     "/assignments/{assignmentId}": {
       "entity": "Assignment",
-      "description": "Shared assignment collection accessible by all users"
+      "description": "Shared assignment collection accessible by all visitors, editable only by admin"
     }
   }
 }

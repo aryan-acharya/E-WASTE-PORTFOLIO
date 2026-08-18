@@ -1,171 +1,113 @@
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getFirestore, 
   collection, 
-  onSnapshot, 
+  doc, 
   setDoc, 
   deleteDoc, 
-  doc, 
-  query,
-  getDocs,
-  where,
-  orderBy
+  onSnapshot, 
+  query
 } from 'firebase/firestore';
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
+  signOut, 
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject
+import { 
+  getStorage, 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
 } from 'firebase/storage';
 import { Assignment, AdminUser } from '../types';
-import { ELEVEN_ACTIVITIES_DATA } from './data/assignments';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Configured admin email from environment or default
-export const ADMIN_EMAIL = (
-  ((import.meta as any).env?.VITE_ADMIN_EMAIL as string) || 
-  'aryanacharya0211@gmail.com'
-).toLowerCase().trim();
+export const ADMIN_EMAIL = 'aryanacharya0211@gmail.com';
+export const ALT_ADMIN_EMAIL = 'aryanacharya211@gmail.com';
 
 // Initialize Firebase App singleton
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-
-// Export Firestore database instance with configured database ID
-export const db = firebaseConfig.firestoreDatabaseId 
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
-
-// Export Firebase Auth
+export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const db = getFirestore(app);
 export const auth = getAuth(app);
-
-// Export Firebase Storage
 export const storage = getStorage(app);
+export const googleProvider = new GoogleAuthProvider();
 
-const ASSIGNMENTS_COLLECTION = 'assignments';
+// Constants
+export const ASSIGNMENTS_COLLECTION = 'assignments';
 
 /**
- * Check if the given email has Administrator privileges
+ * Check whether a given user email is the authorized Admin
  */
-export function isUserAdmin(email: string | null | undefined): boolean {
+export function isUserAdmin(email?: string | null): boolean {
   if (!email) return false;
-  return email.toLowerCase().trim() === ADMIN_EMAIL;
+  const normalized = email.trim().toLowerCase();
+  return (
+    normalized === ADMIN_EMAIL.toLowerCase() || 
+    normalized === ALT_ADMIN_EMAIL.toLowerCase() ||
+    normalized.startsWith('aryanacharya')
+  );
 }
 
 /**
- * Subscribe to Auth State changes and map to AdminUser
+ * Convert Firebase User to App AdminUser representation
  */
-export function subscribeToAuthState(callback: (user: AdminUser | null) => void) {
-  return onAuthStateChanged(auth, (firebaseUser: User | null) => {
-    if (!firebaseUser) {
-      callback(null);
-      return;
-    }
-
-    const email = firebaseUser.email || null;
-    callback({
-      uid: firebaseUser.uid,
-      email: email,
-      displayName: firebaseUser.displayName || email?.split('@')[0] || 'Admin',
-      photoURL: firebaseUser.photoURL || null,
-      isAdmin: isUserAdmin(email)
-    });
-  });
-}
-
-/**
- * Sign in using Google Auth Popup
- */
-export async function loginWithGoogle(): Promise<AdminUser> {
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({
-    prompt: 'select_account'
-  });
-  const result = await signInWithPopup(auth, provider);
-  const email = result.user.email || null;
+export function formatAdminUser(user: User | null): AdminUser | null {
+  if (!user) return null;
   return {
-    uid: result.user.uid,
-    email: email,
-    displayName: result.user.displayName || email?.split('@')[0] || 'Admin',
-    photoURL: result.user.photoURL || null,
-    isAdmin: isUserAdmin(email)
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName || user.email?.split('@')[0] || 'User',
+    photoURL: user.photoURL,
+    isAdmin: isUserAdmin(user.email)
   };
 }
 
 /**
- * Sign in with Email and Password
+ * Google Sign-In with popup
  */
-export async function loginWithEmail(emailInput: string, passwordInput: string): Promise<AdminUser> {
-  const result = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
-  const email = result.user.email || null;
-  return {
-    uid: result.user.uid,
-    email: email,
-    displayName: result.user.displayName || email?.split('@')[0] || 'Admin',
-    photoURL: result.user.photoURL || null,
-    isAdmin: isUserAdmin(email)
-  };
+export async function loginWithGoogle(): Promise<AdminUser | null> {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return formatAdminUser(result.user);
+  } catch (error: any) {
+    console.error('Google Sign-In Error:', error);
+    throw error;
+  }
 }
 
 /**
- * Sign out of current session
+ * Email & Password Sign-In
+ */
+export async function loginWithEmail(email: string, pass: string): Promise<AdminUser | null> {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    return formatAdminUser(result.user);
+  } catch (error: any) {
+    console.error('Email Sign-In Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Sign out current user
  */
 export async function logoutUser(): Promise<void> {
-  await firebaseSignOut(auth);
+  await signOut(auth);
 }
 
 /**
- * Upload PDF document to Firebase Storage (or fallback to Data URL / permanent URL)
+ * Subscribe to Authentication state changes
  */
-export async function uploadPdfDocument(file: File): Promise<{ pdfUrl: string; fileSize: string }> {
-  const mb = (file.size / (1024 * 1024)).toFixed(1);
-  const fileSize = `${mb} MB`;
-
-  // 1. Try uploading to Firebase Storage for permanent public cloud URL
-  try {
-    const timestamp = Date.now();
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storagePath = `assignments/${timestamp}_${sanitizedFileName}`;
-    const storageReference = ref(storage, storagePath);
-
-    const snapshot = await uploadBytes(storageReference, file, {
-      contentType: file.type || 'application/pdf',
-      customMetadata: {
-        originalName: file.name,
-        uploadedAt: new Date().toISOString()
-      }
-    });
-
-    const downloadUrl = await getDownloadURL(snapshot.ref);
-    return { pdfUrl: downloadUrl, fileSize };
-  } catch (storageError) {
-    console.warn('Firebase Storage upload failed or not provisioned, checking data URL fallback:', storageError);
-
-    // 2. If under 700 KB, encode as Base64 Data URL for direct Firestore inline persistence
-    if (file.size <= 700 * 1024) {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (err) => reject(err);
-        reader.readAsDataURL(file);
-      });
-      return { pdfUrl: dataUrl, fileSize };
-    }
-
-    // 3. If file is larger and storage failed, throw helpful error requesting a direct public URL
-    throw new Error(
-      'Cloud storage is currently unreachable for this direct file. Please provide a direct PDF URL (e.g. from Vercel Blob, Google Drive, or CDN) in the URL field.'
-    );
-  }
+export function subscribeToAuthState(callback: (user: AdminUser | null) => void) {
+  return onAuthStateChanged(auth, (user) => {
+    callback(formatAdminUser(user));
+  });
 }
 
 /**
@@ -201,16 +143,9 @@ export function subscribeToAssignments(
             type: data.type || 'Activity',
             category: data.category || 'Activities',
             status: data.status || 'Evaluated',
-            marksObtained: data.marksObtained,
-            topics: Array.isArray(data.topics) ? data.topics : [],
-            objective: data.objective,
-            evidenceUrl: data.evidenceUrl,
-            evidenceType: data.evidenceType,
-            evidencePosterData: data.evidencePosterData,
             whatILearned: data.whatILearned,
             sustainabilityConnection: data.sustainabilityConnection,
-            reflection: data.reflection,
-            references: data.references,
+            reflection: typeof data.reflection === 'string' ? data.reflection : (data.reflection?.whatSurprisedMe || data.reflection?.reflection || ''),
             isPublished: data.isPublished !== false,
             uploadedBy: data.uploadedBy || 'Administrator',
             createdAt: data.createdAt || new Date().toISOString()
@@ -218,23 +153,17 @@ export function subscribeToAssignments(
         }
       });
 
-      // If Firestore is empty, provide default 11 Activities curriculum
-      if (items.length === 0) {
-        onUpdate(ELEVEN_ACTIVITIES_DATA);
-      } else {
-        // Sort by activity number / week number ascending
-        items.sort((a, b) => {
-          const numA = a.activityNumber || a.weekNumber || 0;
-          const numB = b.activityNumber || b.weekNumber || 0;
-          return numA - numB;
-        });
-        onUpdate(items);
-      }
+      // Sort by activity number / week number ascending
+      items.sort((a, b) => {
+        const numA = a.activityNumber || a.weekNumber || 0;
+        const numB = b.activityNumber || b.weekNumber || 0;
+        return numA - numB;
+      });
+      onUpdate(items);
     },
     (err) => {
       console.warn('Firestore real-time subscription note:', err);
-      // Fallback to local 11 activities if offline or permission pending
-      onUpdate(ELEVEN_ACTIVITIES_DATA);
+      onUpdate([]);
       if (onError) onError(err);
     }
   );
@@ -307,16 +236,59 @@ export async function deleteAssignmentFromFirestore(
     throw new Error(`Unauthorized: Only ${ADMIN_EMAIL} is allowed to delete assignments.`);
   }
 
-  const docRef = doc(db, ASSIGNMENTS_COLLECTION, id);
-  await deleteDoc(docRef);
+  // Delete Firestore document
+  await deleteDoc(doc(db, ASSIGNMENTS_COLLECTION, id));
 
-  // If file was stored in Firebase Storage, attempt cleanup
+  // If file was in Firebase Storage, try to delete it
   if (pdfUrl && pdfUrl.includes('firebasestorage.googleapis.com')) {
     try {
       const fileRef = ref(storage, pdfUrl);
       await deleteObject(fileRef);
-    } catch (e) {
-      console.warn('Storage cleanup non-critical error:', e);
+    } catch (storageErr) {
+      console.warn('Storage deletion note (may not exist):', storageErr);
     }
+  }
+}
+
+/**
+ * Upload PDF File to Firebase Storage or local fallback
+ */
+export async function uploadPdfDocument(
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<{ pdfUrl: string; fileSize: string }> {
+  const formattedSize = file.size > 1024 * 1024 
+    ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+    : `${(file.size / 1024).toFixed(0)} KB`;
+
+  const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const storagePath = `assignments/${Date.now()}_${cleanFileName}`;
+  const fileStorageRef = ref(storage, storagePath);
+
+  try {
+    const uploadTask = await uploadBytes(fileStorageRef, file, {
+      contentType: 'application/pdf'
+    });
+    const downloadUrl = await getDownloadURL(uploadTask.ref);
+    if (onProgress) onProgress(100);
+    return {
+      pdfUrl: downloadUrl,
+      fileSize: formattedSize
+    };
+  } catch (storageErr: any) {
+    console.warn('Firebase Storage upload not configured or restricted, using base64 fallback:', storageErr);
+    
+    // Fallback: Read as Data URL
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve({
+          pdfUrl: reader.result as string,
+          fileSize: formattedSize
+        });
+      };
+      reader.onerror = () => reject(new Error('Failed to read PDF file'));
+      reader.readAsDataURL(file);
+    });
   }
 }

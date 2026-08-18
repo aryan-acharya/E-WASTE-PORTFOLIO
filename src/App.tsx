@@ -8,7 +8,6 @@ import { PdfViewerModal } from './components/PdfViewerModal';
 import { FloatingBlobs } from './components/FloatingBlobs';
 import { Footer } from './components/Footer';
 import { AdminAuthModal } from './components/AdminAuthModal';
-import { SAMPLE_ASSIGNMENTS_DATA } from './lib/data/assignments';
 import { SUBJECTS_DATA } from './lib/data/subjects';
 import { 
   subscribeToAssignments, 
@@ -46,7 +45,7 @@ export default function App() {
         setAssignments(firestoreAssignments);
       },
       (error) => {
-        console.warn('Firestore subscription fallback:', error);
+        console.warn('Firestore subscription status:', error);
       }
     );
 
@@ -66,18 +65,6 @@ export default function App() {
   // Delete Assignment (Admin only)
   const handleDeleteAssignment = async (id: string, pdfUrl?: string) => {
     await deleteAssignmentFromFirestore(id, pdfUrl, currentUser?.email);
-  };
-
-  // Sample data seeding (Admin only)
-  const handleLoadSampleData = async () => {
-    if (!isAdmin) return;
-    for (const item of SAMPLE_ASSIGNMENTS_DATA) {
-      try {
-        await saveAssignmentToFirestore(item, currentUser?.email);
-      } catch (err) {
-        console.error('Failed to load sample data item to Firestore:', err);
-      }
-    }
   };
 
   // Handle keyboard shortcut (⌘K or Ctrl+K) to focus search / switch to assignments
@@ -100,7 +87,7 @@ export default function App() {
   const handleNavigate = (section: NavSection) => {
     setActiveSection(section);
     
-    // Smooth scroll to relevant section if on single page layout
+    // Smooth scroll to relevant section
     if (section === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (section === 'overview') {
@@ -170,7 +157,6 @@ export default function App() {
           onAddAssignment={handleAddAssignment}
           onUpdateAssignment={handleUpdateAssignment}
           onDeleteAssignment={handleDeleteAssignment}
-          onLoadSampleData={isAdmin ? handleLoadSampleData : undefined}
           onViewPdf={(assignment) => setActivePdfAssignment(assignment)}
           onOpenAdminAuth={() => setIsAdminAuthModalOpen(true)}
           searchQueryProp={searchQuery}

@@ -20,12 +20,6 @@ export interface Subject {
   iconName: string;
 }
 
-export interface ActivityReflection {
-  whatSurprisedMe?: string;
-  whatChallengeFaced?: string;
-  whatWillIDoDifferently?: string;
-}
-
 export interface Assignment {
   id: string;
   title: string;
@@ -38,30 +32,18 @@ export interface Assignment {
   type: AssignmentType;
   category?: AssignmentCategory;
   status: 'Completed' | 'Evaluated' | 'Submitted';
-  marksObtained?: string;
-  topics: string[];
+  
+  // Custom Core Academic Content
+  whatILearned?: string;
+  sustainabilityConnection?: string;
+  reflection?: string;
+
+  activityNumber?: number; // 1, 2, 3...
+  activityCode?: string; // e.g. "ACTIVITY 01"
+  tagPill?: string; // e.g. "ACTIVITY"
   isPublished?: boolean;
   uploadedBy?: string;
   createdAt?: string;
-
-  // Rich Activity Details (Matching User Visual Spec)
-  activityNumber?: number; // 1 to 11
-  activityCode?: string; // e.g. "ACTIVITY 01"
-  tagPill?: string; // e.g. "PLEDGE", "AUDIT", "TEARDOWN", "LCA"
-  objective?: string;
-  evidenceUrl?: string;
-  evidenceType?: 'image' | 'pdf' | 'custom_poster';
-  evidencePosterData?: {
-    title?: string;
-    studentName?: string;
-    rollNumber?: string;
-    date?: string;
-    pledgeLines?: string[];
-  };
-  whatILearned?: string;
-  sustainabilityConnection?: string;
-  reflection?: ActivityReflection;
-  references?: string[];
 }
 
 export interface AdminUser {
@@ -87,4 +69,3 @@ export interface ProfileInfo {
   email: string;
   department: string;
 }
-

@@ -2,7 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /assignments/{assignmentId} {
-      allow read, create, update, delete: if true;
+      // Anyone can view/read assignments
+      allow read: if true;
+
+      // Only authorized administrator can create, update, or delete
+      allow create, update, delete: if request.auth != null && 
+        (request.auth.token.email == 'aryanacharya0211@gmail.com' || 
+         request.auth.token.email == 'aryanacharya211@gmail.com');
     }
   }
 }
