@@ -9,6 +9,7 @@ import { AssignmentsView } from './components/AssignmentsView';
 import { FloatingBlobs } from './components/FloatingBlobs';
 import { Footer } from './components/Footer';
 import { AdminAuthModal } from './components/AdminAuthModal';
+import { AdminRouteView } from './components/admin/AdminRouteView';
 import { SUBJECTS_DATA } from './lib/data/subjects';
 import { subscribeToAssignments, subscribeToAuthState } from './lib/firebase';
 
@@ -22,11 +23,43 @@ export default function App() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // URL route detection (/admin or #admin)
+  const [currentPath, setCurrentPath] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.pathname.toLowerCase();
+    }
+    return '/';
+  });
+
+  const [currentHash, setCurrentHash] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.hash.toLowerCase();
+    }
+    return '';
+  });
+
+  // Track popstate and hashchange
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname.toLowerCase());
+      setCurrentHash(window.location.hash.toLowerCase());
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
 
   // Subscribe to Auth state
   useEffect(() => {
     const unsubscribeAuth = subscribeToAuthState((user) => {
       setAdminUser(user);
+      setAuthLoading(false);
     });
     return () => unsubscribeAuth();
   }, []);
@@ -44,6 +77,16 @@ export default function App() {
 
     return () => unsubscribeFirestore();
   }, []);
+
+  const navigateToPortfolio = () => {
+    if (window.location.pathname.toLowerCase().startsWith('/admin')) {
+      window.history.pushState({}, '', '/');
+      setCurrentPath('/');
+    }
+    window.location.hash = '';
+    setCurrentHash('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Navigation action
   const handleNavigate = (section: NavSection) => {
@@ -76,6 +119,29 @@ export default function App() {
   const totalCredits = SUBJECTS_DATA.reduce((acc, curr) => acc + curr.credits, 0);
   const isVercelProduction = typeof window !== 'undefined' && window.location.hostname === 'e-waste-portfolio-seven.vercel.app';
 
+  const isAdminRoute = currentPath === '/admin' || currentPath === '/admin/' || currentHash === '#admin';
+
+  // Dedicated Protected Route View for /admin or #admin
+  if (isAdminRoute) {
+    return (
+      <AdminRouteView
+        adminUser={adminUser}
+        authLoading={authLoading}
+        assignments={assignments}
+        onReturnToPortfolio={navigateToPortfolio}
+        onOpenAddModal={() => {}}
+        onOpenEditModal={() => {}}
+        onViewAssignment={(assignment) => {
+          navigateToPortfolio();
+          setTimeout(() => {
+            const el = document.getElementById(`assignment-${assignment.id}`) || document.getElementById('assignments-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 150);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 relative transition-colors duration-300 font-sans selection:bg-emerald-500 selection:text-white">
       {/* Production Domain Notice (When previewing in Cloud Run / editor) */}
@@ -107,7 +173,14 @@ export default function App() {
         activeSection={activeSection}
         onNavigate={handleNavigate}
         onOpenSearch={() => handleNavigate('assignments')}
-        onOpenAdmin={() => setIsAdminAuthOpen(true)}
+        onOpenAdmin={() => {
+          if (adminUser?.isAdmin) {
+            window.location.hash = '#admin';
+            setCurrentHash('#admin');
+          } else {
+            setIsAdminAuthOpen(true);
+          }
+        }}
         adminUser={adminUser}
         totalAssignmentsCount={assignments.length}
       />
@@ -117,7 +190,7 @@ export default function App() {
         {/* Existing Hero/Title section */}
         <HeroTitle />
 
-        {/* NEW 3D GLOBE SECTION (Centerpiece Earth & Planetary E-Waste Monitor) */}
+        {/* 3D GLOBE SECTION (Centerpiece Earth & Planetary E-Waste Monitor) */}
         <Suspense
           fallback={
             <section className="relative py-8 md:py-12 overflow-hidden">
@@ -168,6 +241,10 @@ export default function App() {
         isOpen={isAdminAuthOpen}
         currentUser={adminUser}
         onClose={() => setIsAdminAuthOpen(false)}
+        onOpenManagementConsole={() => {
+          window.location.hash = '#admin';
+          setCurrentHash('#admin');
+        }}
       />
     </div>
   );

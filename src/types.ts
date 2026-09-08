@@ -97,6 +97,7 @@ export interface AdminUser {
   displayName: string | null;
   photoURL: string | null;
   isAdmin: boolean;
+  emailVerified?: boolean;
 }
 
 export type SortOption = 'latest' | 'oldest' | 'title-asc' | 'title-desc' | 'week-asc' | 'week-desc';

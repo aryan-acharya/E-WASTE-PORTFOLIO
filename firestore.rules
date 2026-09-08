@@ -6,9 +6,7 @@ service cloud.firestore {
       function isAdmin() {
         return request.auth != null &&
           request.auth.token.email_verified == true &&
-          (request.auth.token.email == 'aryanacharya0211@gmail.com' ||
-           request.auth.token.email == 'aryanacharya211@gmail.com' ||
-           (request.auth.token.email != null && request.auth.token.email.matches('^aryanacharya.*@gmail[.]com$')));
+          request.auth.token.email == 'aryanacharya0211@gmail.com';
       }
 
       // Public visitors can only read published assignments; Admin can read all (including drafts)

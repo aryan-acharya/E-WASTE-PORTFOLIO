@@ -12,10 +12,13 @@ import {
 } from 'firebase/firestore';
 import { 
   getAuth, 
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  inMemoryPersistence,
   GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
+  signInWithRedirect,
+  getRedirectResult,
   signOut, 
   onAuthStateChanged,
   User
@@ -42,7 +45,18 @@ export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = firebaseConfig.firestoreDatabaseId 
   ? getFirestore(app, firebaseConfig.firestoreDatabaseId) 
   : getFirestore(app);
-export const auth = getAuth(app);
+
+// Resilient Auth initialization with multi-layer persistence fallback
+function initializeResilientAuth() {
+  try {
+    return initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence]
+    });
+  } catch {
+    return getAuth(app);
+  }
+}
+export const auth = initializeResilientAuth();
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -102,18 +116,30 @@ async function testConnection() {
 testConnection();
 
 /**
- * Check whether a given user email is the authorized Admin
+ * Detect if the application is running inside an iframe (e.g. AI Studio preview)
  */
-export function isUserAdmin(email?: string | null): boolean {
+export function isRunningInIframe(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Check whether a given user email is the authorized Admin.
+ * Verifies that the email matches ADMIN_EMAIL and is provider-verified.
+ */
+export function isUserAdmin(email?: string | null, emailVerified?: boolean): boolean {
   if (!email) return false;
+  const current = auth.currentUser;
+  const verified = emailVerified !== undefined 
+    ? emailVerified 
+    : (current && current.email?.toLowerCase() === email.toLowerCase() ? current.emailVerified : false);
   const normalized = email.trim().toLowerCase();
-  return (
-    normalized === ADMIN_EMAIL ||
-    normalized === 'aryanacharya0211@gmail.com' ||
-    normalized === 'aryanacharya211@gmail.com' ||
-    normalized === 'aryan.acharya0211@gmail.com' ||
-    normalized.startsWith('aryanacharya')
-  );
+  
+  // Strictly enforce verified email matching ADMIN_EMAIL
+  return verified === true && normalized === ADMIN_EMAIL;
 }
 
 /**
@@ -121,51 +147,55 @@ export function isUserAdmin(email?: string | null): boolean {
  */
 export function formatAdminUser(user: User | null): AdminUser | null {
   if (!user) return null;
+  const isVerified = user.emailVerified === true;
+  const isAdmin = isUserAdmin(user.email, isVerified);
+
   return {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName || user.email?.split('@')[0] || 'User',
     photoURL: user.photoURL,
-    isAdmin: isUserAdmin(user.email)
+    isAdmin,
+    emailVerified: isVerified
   };
 }
 
 /**
- * Google Sign-In with popup
+ * Initiate top-level browser redirect to Google OAuth flow.
+ * Note: Does NOT open in iframe or embedded popup.
+ * If running inside an iframe, opens the production site in a new top-level tab.
  */
-export async function loginWithGoogle(): Promise<AdminUser | null> {
+export async function loginWithGoogleRedirect(): Promise<void> {
+  if (isRunningInIframe()) {
+    // Iframe sandboxing blocks Google OAuth redirect. Direct user to top-level production site.
+    window.open('https://e-waste-portfolio-seven.vercel.app/#admin', '_blank');
+    return;
+  }
+
+  googleProvider.setCustomParameters({
+    prompt: 'select_account'
+  });
+
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return formatAdminUser(result.user);
+    await signInWithRedirect(auth, googleProvider);
   } catch (error: any) {
-    console.error('Google Sign-In Error:', error);
+    console.error('Google Sign-In Redirect Error:', error);
     throw error;
   }
 }
 
 /**
- * Email & Password Sign-In (with automatic registration for authorized admin)
+ * Check and resolve any redirect credential returned from Google OAuth
  */
-export async function loginWithEmail(email: string, pass: string): Promise<AdminUser | null> {
-  const cleanEmail = email.trim().toLowerCase();
+export async function handleRedirectAuthResult(): Promise<AdminUser | null> {
   try {
-    const result = await signInWithEmailAndPassword(auth, cleanEmail, pass);
-    return formatAdminUser(result.user);
-  } catch (error: any) {
-    // If account doesn't exist yet, attempt to create it for the admin
-    if (
-      (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') &&
-      isUserAdmin(cleanEmail)
-    ) {
-      try {
-        const createResult = await createUserWithEmailAndPassword(auth, cleanEmail, pass);
-        return formatAdminUser(createResult.user);
-      } catch (createErr: any) {
-        console.error('Email Registration Error:', createErr);
-        throw createErr;
-      }
+    const result = await getRedirectResult(auth);
+    if (result && result.user) {
+      return formatAdminUser(result.user);
     }
-    console.error('Email Sign-In Error:', error);
+    return null;
+  } catch (error: any) {
+    console.error('Error handling Google redirect result:', error);
     throw error;
   }
 }
@@ -178,9 +208,15 @@ export async function logoutUser(): Promise<void> {
 }
 
 /**
- * Subscribe to Authentication state changes
+ * Subscribe to Authentication state changes.
+ * Also checks getRedirectResult in the background to capture any returned credential.
  */
 export function subscribeToAuthState(callback: (user: AdminUser | null) => void) {
+  // Capture any redirect credential on startup
+  handleRedirectAuthResult().catch((err) => {
+    console.warn('Initial redirect check note:', err);
+  });
+
   return onAuthStateChanged(auth, (user) => {
     callback(formatAdminUser(user));
   });
