@@ -1,10 +1,14 @@
 import * as THREE from 'three';
 
 /**
- * Generates high-fidelity Earth textures in memory with zero external network dependencies.
- * Produces realistic continents styled in dark emerald/forest tones, deep navy oceans,
- * subtle latitude/longitude telemetry grids, and glowing urban night lights.
+ * High-performance Earth textures generated in memory with zero external network dependencies.
+ * Includes texture caching to prevent repeated canvas allocation and memory thrashing.
  */
+
+// Cache textures in memory
+let cachedEarthTextureDesktop: THREE.CanvasTexture | null = null;
+let cachedEarthTextureMobile: THREE.CanvasTexture | null = null;
+let cachedCloudsTexture: THREE.CanvasTexture | null = null;
 
 // Simplified polygon paths for major world landmasses in equirectangular projection [lon (-180 to 180), lat (-90 to 90)]
 const CONTINENTS: [number, number][][] = [
@@ -114,13 +118,21 @@ const URBAN_LIGHTS: [number, number, number, number][] = [
   [-58.3, -34.6, 14, 0.75], // Buenos Aires
 ];
 
-export function createEarthTexture(): THREE.CanvasTexture {
-  const width = 2048;
-  const height = 1024;
+export function createEarthTexture(isMobile = false): THREE.CanvasTexture {
+  if (isMobile && cachedEarthTextureMobile) {
+    return cachedEarthTextureMobile;
+  }
+  if (!isMobile && cachedEarthTextureDesktop) {
+    return cachedEarthTextureDesktop;
+  }
+
+  // Optimize resolution: 1024x512 on mobile, 1536x768 on desktop (crisp, balanced GPU texture footprint)
+  const width = isMobile ? 1024 : 1536;
+  const height = isMobile ? 512 : 768;
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { willReadFrequently: false });
 
   if (!ctx) {
     const fallback = new THREE.CanvasTexture(canvas);
@@ -138,7 +150,7 @@ export function createEarthTexture(): THREE.CanvasTexture {
   ctx.fillRect(0, 0, width, height);
 
   // 2. Telemetry Grids (Subtle latitude & longitude lines across oceans)
-  ctx.strokeStyle = 'rgba(16, 185, 129, 0.06)';
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.07)';
   ctx.lineWidth = 1;
   ctx.setLineDash([4, 12]);
 
@@ -164,8 +176,8 @@ export function createEarthTexture(): THREE.CanvasTexture {
 
   // Equator line (delicate accent)
   const equatorY = height / 2;
-  ctx.strokeStyle = 'rgba(52, 211, 153, 0.12)';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(52, 211, 153, 0.14)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(0, equatorY);
   ctx.lineTo(width, equatorY);
@@ -205,29 +217,30 @@ export function createEarthTexture(): THREE.CanvasTexture {
 
     // Glowing shoreline border
     ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
-    ctx.shadowBlur = 8;
+    ctx.lineWidth = isMobile ? 1.5 : 2;
+    ctx.shadowColor = 'rgba(16, 185, 129, 0.5)';
+    ctx.shadowBlur = isMobile ? 4 : 6;
     ctx.stroke();
 
     // Inner coastal contour
     ctx.strokeStyle = '#34d399';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.8;
     ctx.shadowBlur = 0;
     ctx.stroke();
 
     ctx.restore();
   });
 
-  // 4. Subtle Topographic noise & texture inside landmasses
+  // 4. Subtle Topographic noise & texture inside landmasses (reduced iterations for instant generation)
+  const noiseCount = isMobile ? 60 : 150;
   ctx.save();
-  ctx.fillStyle = 'rgba(5, 150, 105, 0.15)';
-  for (let i = 0; i < 600; i++) {
+  ctx.fillStyle = 'rgba(5, 150, 105, 0.18)';
+  for (let i = 0; i < noiseCount; i++) {
     const randLon = -180 + Math.random() * 360;
     const randLat = -70 + Math.random() * 140;
     const [x, y] = project(randLon, randLat);
     ctx.beginPath();
-    ctx.arc(x, y, 1.5 + Math.random() * 3, 0, Math.PI * 2);
+    ctx.arc(x, y, 1.2 + Math.random() * 2, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
@@ -235,36 +248,24 @@ export function createEarthTexture(): THREE.CanvasTexture {
   // 5. Urban Night Lights / High-Tech E-Waste Processing Nodes
   URBAN_LIGHTS.forEach(([lon, lat, radius, intensity]) => {
     const [cx, cy] = project(lon, lat);
+    const scaledRadius = (radius * width) / 2048;
 
     // Glow aura
-    const lightGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    const lightGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, scaledRadius);
     lightGlow.addColorStop(0, `rgba(52, 211, 153, ${0.85 * intensity})`);
-    lightGlow.addColorStop(0.3, `rgba(16, 185, 129, ${0.45 * intensity})`);
-    lightGlow.addColorStop(0.7, `rgba(5, 150, 105, ${0.15 * intensity})`);
+    lightGlow.addColorStop(0.4, `rgba(16, 185, 129, ${0.35 * intensity})`);
     lightGlow.addColorStop(1, 'transparent');
 
     ctx.fillStyle = lightGlow;
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.arc(cx, cy, scaledRadius, 0, Math.PI * 2);
     ctx.fill();
 
     // Core bright star dot
     ctx.fillStyle = `rgba(255, 255, 255, ${0.95 * intensity})`;
     ctx.beginPath();
-    ctx.arc(cx, cy, 1.5, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 1.2, 0, Math.PI * 2);
     ctx.fill();
-
-    // Tiny surrounding sub-dots
-    for (let s = 0; s < 4; s++) {
-      const angle = (s * Math.PI) / 2 + Math.random() * 0.4;
-      const dist = 3 + Math.random() * (radius * 0.5);
-      const sx = cx + Math.cos(angle) * dist;
-      const sy = cy + Math.sin(angle) * dist;
-      ctx.fillStyle = `rgba(110, 231, 183, ${0.6 * intensity})`;
-      ctx.beginPath();
-      ctx.arc(sx, sy, 1, 0, Math.PI * 2);
-      ctx.fill();
-    }
   });
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -274,15 +275,27 @@ export function createEarthTexture(): THREE.CanvasTexture {
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
+
+  if (isMobile) {
+    cachedEarthTextureMobile = texture;
+  } else {
+    cachedEarthTextureDesktop = texture;
+  }
+
   return texture;
 }
 
 /**
- * Creates a subtle atmospheric cloud / swirl layer
+ * Creates a lightweight atmospheric cloud / swirl layer
  */
 export function createAtmosphereTexture(): THREE.CanvasTexture {
-  const width = 1024;
-  const height = 512;
+  if (cachedCloudsTexture) {
+    return cachedCloudsTexture;
+  }
+
+  // Optimized lightweight 512x256 resolution
+  const width = 512;
+  const height = 256;
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -294,16 +307,16 @@ export function createAtmosphereTexture(): THREE.CanvasTexture {
 
   ctx.clearRect(0, 0, width, height);
 
-  // Wispy atmospheric bands
-  for (let i = 0; i < 40; i++) {
+  // Wispy atmospheric bands (20 soft bands)
+  for (let i = 0; i < 20; i++) {
     const y = Math.random() * height;
     const x = Math.random() * width;
-    const w = 150 + Math.random() * 300;
-    const h = 20 + Math.random() * 60;
+    const w = 100 + Math.random() * 200;
+    const h = 15 + Math.random() * 40;
 
     const grad = ctx.createRadialGradient(x, y, 0, x, y, Math.max(w, h));
     grad.addColorStop(0, 'rgba(52, 211, 153, 0.08)');
-    grad.addColorStop(0.5, 'rgba(16, 185, 129, 0.03)');
+    grad.addColorStop(0.6, 'rgba(16, 185, 129, 0.02)');
     grad.addColorStop(1, 'transparent');
 
     ctx.fillStyle = grad;
@@ -313,31 +326,31 @@ export function createAtmosphereTexture(): THREE.CanvasTexture {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  cachedCloudsTexture = texture;
   return texture;
 }
 
 /**
- * Creates custom atmosphere glow shader material
+ * Creates custom atmosphere glow shader material (Fresnel rim glow)
  */
 export function createAtmosphereShader(): THREE.ShaderMaterial {
   const vertexShader = `
     varying vec3 vNormal;
-    varying vec3 vPositionNormal;
     void main() {
       vNormal = normalize(normalMatrix * normal);
-      vPositionNormal = normalize((modelViewMatrix * vec4(position, 1.0)).xyz);
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `;
 
   const fragmentShader = `
     varying vec3 vNormal;
-    varying vec3 vPositionNormal;
     uniform vec3 glowColor;
     void main() {
-      float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
+      float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.4);
       intensity = clamp(intensity, 0.0, 1.0);
-      gl_FragColor = vec4(glowColor, intensity * 0.75);
+      gl_FragColor = vec4(glowColor, intensity * 0.7);
     }
   `;
 
@@ -353,3 +366,4 @@ export function createAtmosphereShader(): THREE.ShaderMaterial {
     depthWrite: false,
   });
 }
+

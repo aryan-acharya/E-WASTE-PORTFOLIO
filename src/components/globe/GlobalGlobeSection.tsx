@@ -58,7 +58,7 @@ export const GlobalGlobeSection: React.FC = () => {
 
           {/* Interactive 3D Earth WebGL Canvas */}
           <InteractiveEarth
-            key={resetKey}
+            resetTrigger={resetKey}
             selectedRegionId={selectedRegion ? selectedRegion.id : null}
             onSelectRegion={handleSelectRegion}
             hoveredRegionId={hoveredRegion ? hoveredRegion.id : null}
