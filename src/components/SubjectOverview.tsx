@@ -6,7 +6,6 @@ import {
   Target, 
   BookOpen, 
   CheckCircle2, 
-  Sparkles, 
   Leaf, 
   Globe, 
   Cpu, 
@@ -89,21 +88,6 @@ export const SubjectOverview: React.FC<SubjectOverviewProps> = () => {
     <section id="subjects-section" className="py-16 md:py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-16">
         
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200/80 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <Sparkles className="w-4 h-4 text-emerald-500 animate-pulse" />
-            <span>Comprehensive Subject Overview</span>
-          </div>
-
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            E-Waste & <span className="emerald-gradient-text">Environmental</span> Management
-          </h2>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-            An interdisciplinary academic domain addressing the global challenge of electronic waste through sustainable technology, hazardous material containment, circular economy design, and legal policy.
-          </p>
-        </div>
-
         {/* Section 1 & 2 Grid: What is E-Waste? + Why is it Important? */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
