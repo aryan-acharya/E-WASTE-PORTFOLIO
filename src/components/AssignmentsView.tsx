@@ -1,53 +1,212 @@
-import React from 'react';
-import { BookOpen, Sparkles, Layers } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  subscribeToAssignments, 
+  subscribeToAuthState, 
+  togglePublishAssignmentInFirestore,
+  deleteAssignmentFromFirestore,
+  ADMIN_EMAIL
+} from '../lib/firebase';
+import { Assignment, AdminUser } from '../types';
+import { ActivityListView } from './activity/ActivityListView';
+import { ActivityDetailView } from './activity/ActivityDetailView';
+import { ActivityFormModal } from './admin/ActivityFormModal';
+import { AdminDashboardModal } from './admin/AdminDashboardModal';
+import { AdminAuthModal } from './AdminAuthModal';
+import { PdfViewerModal } from './PdfViewerModal';
 
-interface AssignmentsViewProps {
-  // Keeping props clean and ready for the new implementation
-}
+export const AssignmentsView: React.FC = () => {
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [selectedActivity, setSelectedActivity] = useState<Assignment | null>(null);
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
 
-export const AssignmentsView: React.FC<AssignmentsViewProps> = () => {
+  // Modals state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<Assignment | null>(null);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [viewingPdfActivity, setViewingPdfActivity] = useState<Assignment | null>(null);
+
+  // Subscribe to Auth State
+  useEffect(() => {
+    const unsubscribeAuth = subscribeToAuthState((user) => {
+      setAdminUser(user);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Subscribe to Realtime Firestore Assignments
+  useEffect(() => {
+    const unsubscribeFirestore = subscribeToAssignments(
+      (firestoreAssignments) => {
+        setAssignments(firestoreAssignments);
+
+        // Check if URL hash matches an activity (e.g. #activity-01 or #activity-02)
+        const hash = window.location.hash.replace('#', '').trim().toLowerCase();
+        if (hash.startsWith('activity-')) {
+          const match = firestoreAssignments.find(
+            (a) => a.slug?.toLowerCase() === hash || a.id.toLowerCase() === hash
+          );
+          if (match) {
+            setSelectedActivity(match);
+          }
+        }
+      },
+      (error) => {
+        console.warn('Assignments subscription error:', error);
+      }
+    );
+
+    return () => unsubscribeFirestore();
+  }, []);
+
+  // Hash change listener for browser navigation (Back / Forward)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '').trim().toLowerCase();
+      if (!hash || hash === 'assignments') {
+        setSelectedActivity(null);
+      } else if (hash.startsWith('activity-')) {
+        const match = assignments.find(
+          (a) => a.slug?.toLowerCase() === hash || a.id.toLowerCase() === hash
+        );
+        if (match) {
+          setSelectedActivity(match);
+        }
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [assignments]);
+
+  // Handle selecting an activity
+  const handleSelectActivity = (activity: Assignment) => {
+    setSelectedActivity(activity);
+    const actNum = activity.activityNumber || 1;
+    const slug = activity.slug || `activity-${String(actNum).padStart(2, '0')}`;
+    window.location.hash = slug;
+    
+    // Scroll smoothly to top of assignment view
+    const el = document.getElementById('assignments-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Handle going back to list
+  const handleBackToList = () => {
+    setSelectedActivity(null);
+    window.location.hash = 'assignments';
+    const el = document.getElementById('assignments-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Open Edit Modal
+  const handleOpenEdit = (activity: Assignment) => {
+    setEditingActivity(activity);
+    setIsAddModalOpen(true);
+  };
+
+  // Toggle publish status
+  const handleTogglePublish = async (activity: Assignment) => {
+    if (!adminUser?.isAdmin) return;
+    try {
+      await togglePublishAssignmentInFirestore(activity.id, !activity.isPublished, adminUser.email);
+    } catch (err) {
+      console.error('Failed to toggle publish:', err);
+    }
+  };
+
+  // Delete activity
+  const handleDeleteActivity = async (activity: Assignment) => {
+    if (!adminUser?.isAdmin) return;
+    if (!window.confirm(`Are you sure you want to permanently delete Activity ${activity.activityNumber}: "${activity.title}" from the cloud database?`)) {
+      return;
+    }
+
+    try {
+      await deleteAssignmentFromFirestore(activity.id, activity.evidenceItems, activity.pdfUrl, adminUser.email);
+      if (selectedActivity?.id === activity.id) {
+        handleBackToList();
+      }
+    } catch (err) {
+      console.error('Failed to delete activity:', err);
+    }
+  };
+
   return (
-    <section id="assignments-section" className="py-16 md:py-24 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Coursework & Submissions</span>
-          </div>
+    <section id="assignments-section" className="relative min-h-[600px] w-full bg-[#05080c] transition-colors">
+      {/* Either Activity Detail View or Activity List View */}
+      {selectedActivity ? (
+        <ActivityDetailView
+          activity={selectedActivity}
+          allActivities={assignments.filter((a) => adminUser?.isAdmin || a.isPublished !== false)}
+          adminUser={adminUser}
+          onBack={handleBackToList}
+          onSelectActivity={handleSelectActivity}
+          onOpenPdfViewer={(act) => setViewingPdfActivity(act)}
+          onEditActivity={handleOpenEdit}
+          onDeleteActivity={handleDeleteActivity}
+          onTogglePublish={handleTogglePublish}
+        />
+      ) : (
+        <ActivityListView
+          assignments={assignments}
+          adminUser={adminUser}
+          onSelectActivity={handleSelectActivity}
+          onOpenAddModal={() => {
+            setEditingActivity(null);
+            setIsAddModalOpen(true);
+          }}
+          onOpenAdminAuth={() => setIsAuthModalOpen(true)}
+          onOpenDashboard={() => setIsDashboardOpen(true)}
+        />
+      )}
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            Assignments & <span className="emerald-gradient-text">Activities</span>
-          </h2>
+      {/* PDF Viewer Modal */}
+      <PdfViewerModal
+        assignment={viewingPdfActivity}
+        onClose={() => setViewingPdfActivity(null)}
+      />
 
-          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base font-medium max-w-2xl mx-auto leading-relaxed">
-            This section has been cleared and is ready for your new coursework structure and presentation layout.
-          </p>
-        </div>
+      {/* Admin Auth Modal (Google & Credentials sign-in) */}
+      <AdminAuthModal
+        isOpen={isAuthModalOpen}
+        currentUser={adminUser}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
 
-        {/* Clean Minimal Canvas Ready for New Approach */}
-        <div className="max-w-xl mx-auto p-12 text-center rounded-3xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800/60 shadow-sm">
-            <BookOpen className="w-8 h-8" />
-          </div>
+      {/* Activity Add / Edit Modal */}
+      <ActivityFormModal
+        isOpen={isAddModalOpen}
+        editingActivity={editingActivity}
+        adminUser={adminUser}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingActivity(null);
+        }}
+        onSuccess={(saved) => {
+          if (selectedActivity?.id === saved.id) {
+            setSelectedActivity(saved);
+          }
+        }}
+      />
 
-          <div className="space-y-2">
-            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Ready for Your New Approach
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
-              All previous features, CRUD actions, and authentication controls have been removed. Let me know how you'd like to structure and design the new assignments section!
-            </p>
-          </div>
-
-          <div className="pt-2 flex items-center justify-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-            <Layers className="w-4 h-4" />
-            <span>Awaiting New Specifications</span>
-          </div>
-        </div>
-
-      </div>
+      {/* Admin Dashboard Modal */}
+      <AdminDashboardModal
+        isOpen={isDashboardOpen}
+        adminUser={adminUser}
+        assignments={assignments}
+        onClose={() => setIsDashboardOpen(false)}
+        onOpenAddModal={() => {
+          setEditingActivity(null);
+          setIsAddModalOpen(true);
+        }}
+        onOpenEditModal={handleOpenEdit}
+        onViewActivity={handleSelectActivity}
+      />
     </section>
   );
 };
