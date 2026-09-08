@@ -15,6 +15,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut, 
   onAuthStateChanged,
   User
@@ -143,13 +144,27 @@ export async function loginWithGoogle(): Promise<AdminUser | null> {
 }
 
 /**
- * Email & Password Sign-In
+ * Email & Password Sign-In (with automatic registration for authorized admin)
  */
 export async function loginWithEmail(email: string, pass: string): Promise<AdminUser | null> {
+  const cleanEmail = email.trim().toLowerCase();
   try {
-    const result = await signInWithEmailAndPassword(auth, email, pass);
+    const result = await signInWithEmailAndPassword(auth, cleanEmail, pass);
     return formatAdminUser(result.user);
   } catch (error: any) {
+    // If account doesn't exist yet, attempt to create it for the admin
+    if (
+      (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') &&
+      isUserAdmin(cleanEmail)
+    ) {
+      try {
+        const createResult = await createUserWithEmailAndPassword(auth, cleanEmail, pass);
+        return formatAdminUser(createResult.user);
+      } catch (createErr: any) {
+        console.error('Email Registration Error:', createErr);
+        throw createErr;
+      }
+    }
     console.error('Email Sign-In Error:', error);
     throw error;
   }

@@ -113,11 +113,11 @@ export const ActivityListView: React.FC<ActivityListViewProps> = ({
             ) : (
               <button
                 onClick={onOpenAdminAuth}
-                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 text-xs font-mono border border-white/10 flex items-center gap-2 transition-colors"
+                className="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 hover:text-emerald-300 text-xs font-mono font-bold border border-emerald-500/30 flex items-center gap-2 shadow-sm shadow-emerald-950/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 title="Admin Authentication"
               >
-                <Lock className="w-3.5 h-3.5 text-slate-400" />
-                Admin Login
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Admin Login</span>
               </button>
             )}
           </div>

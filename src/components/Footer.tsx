@@ -32,8 +32,17 @@ export const Footer: React.FC = () => {
             <p className="flex items-center justify-center gap-1 font-medium">
               Academic Year {PROFILE_DATA.academicYear} • E-Waste & Environmental Management
             </p>
-            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
-              <span>Digital Repository for Coursework Submissions</span>
+            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
+              <span>Digital Repository</span>
+              <span>•</span>
+              <a
+                href="https://e-waste-portfolio-seven.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-500 hover:text-emerald-400 underline underline-offset-2 transition-colors font-mono"
+              >
+                e-waste-portfolio-seven.vercel.app
+              </a>
             </p>
           </div>
 

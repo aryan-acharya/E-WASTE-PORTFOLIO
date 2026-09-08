@@ -11,7 +11,10 @@ import {
   Key, 
   CheckCircle2,
   Sparkles,
-  UserCheck
+  UserCheck,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { AdminUser } from '../types';
 import { 
@@ -19,6 +22,9 @@ import {
   loginWithEmail, 
   logoutUser 
 } from '../lib/firebase';
+import firebaseConfig from '../../firebase-applet-config.json';
+
+export const VERCEL_PRODUCTION_URL = 'https://e-waste-portfolio-seven.vercel.app/';
 
 interface AdminAuthModalProps {
   isOpen: boolean;
@@ -31,17 +37,31 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   onClose,
   currentUser
 }) => {
-  const [emailInput, setEmailInput] = useState('');
+  const [emailInput, setEmailInput] = useState('aryanacharya0211@gmail.com');
   const [passwordInput, setPasswordInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isDomainError, setIsDomainError] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authMode, setAuthMode] = useState<'google' | 'email'>('google');
 
   if (!isOpen) return null;
 
+  const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const firebaseConsoleUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`;
+
+  const handleCopyDomain = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(currentHostname);
+      setCopiedDomain(true);
+      setTimeout(() => setCopiedDomain(false), 2500);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setErrorMsg('');
+    setIsDomainError(false);
     try {
       const user = await loginWithGoogle();
       if (!user) {
@@ -58,12 +78,13 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       }
     } catch (err: any) {
       console.error('Google Sign In error:', err);
-      if (err?.code === 'auth/popup-blocked') {
+      if (err?.code === 'auth/unauthorized-domain') {
+        setIsDomainError(true);
+        setErrorMsg('Authentication domain not authorized in Firebase.');
+      } else if (err?.code === 'auth/popup-blocked') {
         setErrorMsg('The sign-in popup was blocked by your browser. Please allow popups or open in a new tab.');
       } else if (err?.code === 'auth/popup-closed-by-user') {
         setErrorMsg('Sign-in window closed before completing.');
-      } else if (err?.code === 'auth/unauthorized-domain') {
-        setErrorMsg('Authentication domain not authorized. Please verify Firebase project authorized domains.');
       } else {
         setErrorMsg(err?.message || 'Failed to sign in with Google. Please try again.');
       }
@@ -154,10 +175,62 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             </div>
 
             <div className="p-6 space-y-5">
-              {errorMsg && (
+              {/* Production Vercel App Link */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Official Production Website</span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate font-mono mt-0.5">
+                    e-waste-portfolio-seven.vercel.app
+                  </div>
+                </div>
+                <a
+                  href={VERCEL_PRODUCTION_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold font-mono flex items-center gap-1.5 shrink-0 transition-all shadow-sm shadow-emerald-500/20"
+                >
+                  <span>Open</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+
+              {errorMsg && !isDomainError && (
                 <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span className="leading-relaxed">{errorMsg}</span>
+                </div>
+              )}
+
+              {isDomainError && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-amber-300 text-sm">
+                        Iframe Preview Notice
+                      </h4>
+                      <p className="text-[11px] text-amber-200/80 mt-1 leading-relaxed">
+                        Google Sign-In popups are blocked inside this editor iframe preview. Open your website directly on Vercel to sign in with Google seamlessly:
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-1">
+                    <div className="grid grid-cols-1 gap-2">
+                      <a
+                        href={VERCEL_PRODUCTION_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs transition-colors shadow-md shadow-emerald-500/20"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Open on e-waste-portfolio-seven.vercel.app</span>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
 

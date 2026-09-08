@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Globe2 } from 'lucide-react';
-import { NavSection, SubjectName, Assignment } from './types';
+import { Globe2, ExternalLink } from 'lucide-react';
+import { NavSection, SubjectName, Assignment, AdminUser } from './types';
 import { Navbar } from './components/Navbar';
 import { HeroTitle } from './components/HeroTitle';
 import { SubjectProfileCard } from './components/SubjectProfileCard';
@@ -8,8 +8,9 @@ import { SubjectOverview } from './components/SubjectOverview';
 import { AssignmentsView } from './components/AssignmentsView';
 import { FloatingBlobs } from './components/FloatingBlobs';
 import { Footer } from './components/Footer';
+import { AdminAuthModal } from './components/AdminAuthModal';
 import { SUBJECTS_DATA } from './lib/data/subjects';
-import { subscribeToAssignments } from './lib/firebase';
+import { subscribeToAssignments, subscribeToAuthState } from './lib/firebase';
 
 // Lazy-load the 3D globe section so it does not block initial page rendering
 const GlobalGlobeSection = lazy(() =>
@@ -19,6 +20,16 @@ const GlobalGlobeSection = lazy(() =>
 export default function App() {
   const [activeSection, setActiveSection] = useState<NavSection>('home');
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
+
+  // Subscribe to Auth state
+  useEffect(() => {
+    const unsubscribeAuth = subscribeToAuthState((user) => {
+      setAdminUser(user);
+    });
+    return () => unsubscribeAuth();
+  }, []);
 
   // Real-time Firestore synchronization for counts
   useEffect(() => {
@@ -63,9 +74,31 @@ export default function App() {
   };
 
   const totalCredits = SUBJECTS_DATA.reduce((acc, curr) => acc + curr.credits, 0);
+  const isVercelProduction = typeof window !== 'undefined' && window.location.hostname === 'e-waste-portfolio-seven.vercel.app';
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 relative transition-colors duration-300 font-sans selection:bg-emerald-500 selection:text-white">
+      {/* Production Domain Notice (When previewing in Cloud Run / editor) */}
+      {!isVercelProduction && (
+        <div className="bg-slate-950/95 backdrop-blur-md text-slate-300 text-xs py-1.5 px-4 border-b border-emerald-500/25 flex items-center justify-between z-50 relative font-mono">
+          <div className="flex items-center gap-2 truncate">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="text-[11px] truncate">
+              Official Production Website: <strong className="text-white">e-waste-portfolio-seven.vercel.app</strong>
+            </span>
+          </div>
+          <a
+            href="https://e-waste-portfolio-seven.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] shrink-0 transition-all shadow-sm shadow-emerald-500/20 ml-2"
+          >
+            <span>Open Website</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      )}
+
       {/* Background Floating Blobs */}
       <FloatingBlobs />
 
@@ -74,6 +107,8 @@ export default function App() {
         activeSection={activeSection}
         onNavigate={handleNavigate}
         onOpenSearch={() => handleNavigate('assignments')}
+        onOpenAdmin={() => setIsAdminAuthOpen(true)}
+        adminUser={adminUser}
         totalAssignmentsCount={assignments.length}
       />
 
@@ -127,6 +162,13 @@ export default function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Global Admin Authentication Modal */}
+      <AdminAuthModal
+        isOpen={isAdminAuthOpen}
+        currentUser={adminUser}
+        onClose={() => setIsAdminAuthOpen(false)}
+      />
     </div>
   );
 }
