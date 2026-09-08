@@ -30,9 +30,11 @@ export interface EvidenceItem {
   id: string;
   url: string;
   name: string;
-  type: 'image' | 'pdf' | 'file';
+  type: 'image' | 'pdf' | 'video' | 'file';
   caption?: string;
+  description?: string;
   fileSize?: string;
+  createdAt?: string;
 }
 
 export interface StructuredReflection {

@@ -438,16 +438,37 @@ export async function deleteAssignmentFromFirestore(
 }
 
 /**
- * Upload Evidence file (image, PDF, etc.) to Firebase Storage
+ * Upload Evidence file (image, PDF, video, etc.) to Firebase Storage
  */
 export async function uploadEvidenceFile(
   file: File,
   folder = 'evidence',
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  currentUserEmail?: string | null,
+  caption?: string,
+  description?: string
 ): Promise<EvidenceItem> {
-  const isImage = file.type.startsWith('image/');
-  const isPdf = file.type === 'application/pdf';
-  const fileType: 'image' | 'pdf' | 'file' = isImage ? 'image' : isPdf ? 'pdf' : 'file';
+  const emailToCheck = currentUserEmail || auth.currentUser?.email;
+  if (!isUserAdmin(emailToCheck)) {
+    throw new Error(`Security Violation: Only verified admin (${ADMIN_EMAIL}) is permitted to upload evidence files.`);
+  }
+
+  // Supported MIME validation: JPG, JPEG, PNG, WEBP, PDF, MP4, WEBM, MOV
+  const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|svg)$/i.test(file.name);
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
+
+  if (!isImage && !isPdf && !isVideo) {
+    throw new Error('Unsupported file type. Please upload an Image (JPG, PNG, WEBP), PDF, or Video (MP4, WEBM, MOV).');
+  }
+
+  // Size limit: 100MB for video/documents, 25MB for images
+  const maxBytes = isVideo ? 100 * 1024 * 1024 : 25 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    throw new Error(`File size exceeds limit (${isVideo ? '100MB' : '25MB'}).`);
+  }
+
+  const fileType: 'image' | 'pdf' | 'video' | 'file' = isImage ? 'image' : isPdf ? 'pdf' : isVideo ? 'video' : 'file';
 
   const formattedSize = file.size > 1024 * 1024 
     ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
@@ -459,7 +480,7 @@ export async function uploadEvidenceFile(
 
   try {
     const uploadTask = await uploadBytes(fileStorageRef, file, {
-      contentType: file.type || 'application/octet-stream'
+      contentType: file.type || (isVideo ? 'video/mp4' : isPdf ? 'application/pdf' : 'image/jpeg')
     });
     const downloadUrl = await getDownloadURL(uploadTask.ref);
     if (onProgress) onProgress(100);
@@ -469,10 +490,13 @@ export async function uploadEvidenceFile(
       url: downloadUrl,
       name: file.name,
       type: fileType,
-      fileSize: formattedSize
+      caption: caption || '',
+      description: description || '',
+      fileSize: formattedSize,
+      createdAt: new Date().toISOString()
     };
   } catch (storageErr) {
-    console.warn('Storage upload encountered error, using base64 fallback:', storageErr);
+    console.warn('Storage upload encountered error, using resilient fallback:', storageErr);
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -481,7 +505,10 @@ export async function uploadEvidenceFile(
           url: reader.result as string,
           name: file.name,
           type: fileType,
-          fileSize: formattedSize
+          caption: caption || '',
+          description: description || '',
+          fileSize: formattedSize,
+          createdAt: new Date().toISOString()
         });
       };
       reader.onerror = () => reject(new Error('Failed to read file'));

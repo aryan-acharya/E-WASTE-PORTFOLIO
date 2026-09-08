@@ -12,7 +12,14 @@ import {
   Check, 
   Sparkles,
   Link as LinkIcon,
-  Loader2
+  Loader2,
+  Video,
+  Film,
+  Eye,
+  EyeOff,
+  Play,
+  CheckCircle2,
+  FileCheck
 } from 'lucide-react';
 import { 
   Assignment, 
@@ -150,15 +157,22 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle uploading evidence image/file
-  const handleEvidenceFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Drag and drop state
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
+  // Upload a file and append to evidence items
+  const processUploadFile = async (file: File, customCaption?: string, customDesc?: string) => {
     try {
       setIsUploadingFile(true);
-      setUploadProgress(20);
-      const uploadedItem = await uploadEvidenceFile(file, 'evidence', (p) => setUploadProgress(p));
+      setUploadProgress(15);
+      const uploadedItem = await uploadEvidenceFile(
+        file,
+        'evidence',
+        (p) => setUploadProgress(p),
+        adminUser?.email,
+        customCaption,
+        customDesc
+      );
       setEvidenceItems((prev) => [...prev, uploadedItem]);
       setIsUploadingFile(false);
       setUploadProgress(0);
@@ -166,6 +180,26 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
       console.error('Evidence upload error:', err);
       setErrorMsg('Failed to upload evidence file: ' + err.message);
       setIsUploadingFile(false);
+    }
+  };
+
+  // Handle uploading evidence image/video/file
+  const handleEvidenceFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processUploadFile(file);
+    e.target.value = '';
+  };
+
+  // Drag and drop handler
+  const handleDropFiles = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    const files = Array.from(e.dataTransfer.files) as File[];
+    if (!files.length) return;
+
+    for (const file of files) {
+      await processUploadFile(file);
     }
   };
 
@@ -187,6 +221,14 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
       setErrorMsg('Failed to upload PDF: ' + err.message);
       setIsUploadingFile(false);
     }
+    e.target.value = '';
+  };
+
+  // Update specific evidence item fields
+  const handleUpdateEvidenceItem = (id: string, field: 'caption' | 'description' | 'name', val: string) => {
+    setEvidenceItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: val } : item))
+    );
   };
 
   // Add reference row
@@ -209,9 +251,8 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
     );
   };
 
-  // Submit form
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Submit form (as published or draft)
+  const handleSaveActivity = async (publishStatus: boolean) => {
     if (!title.trim()) {
       setErrorMsg('Please enter an activity title.');
       setActiveTab('basics');
@@ -261,7 +302,7 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
         type: type,
         category: category,
         status: status,
-        isPublished: isPublished,
+        isPublished: publishStatus,
         createdBy: adminUser?.email || ADMIN_EMAIL,
         uploadedBy: adminUser?.email || ADMIN_EMAIL,
         createdAt: editingActivity?.createdAt || new Date().toISOString(),
@@ -282,6 +323,11 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
       setErrorMsg(err.message || 'Failed to save to database. Ensure you are signed in as administrator.');
       setIsSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSaveActivity(isPublished);
   };
 
   return (
@@ -497,13 +543,13 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                     03. EVIDENCE ARTIFACTS & FILES
                   </label>
                   <p className="text-xs text-slate-400 mb-3">
-                    Upload poster images, teardown bench photos, chemical assays, or PDF reports stored persistently in Firebase Cloud Storage.
+                    Upload poster images, teardown bench photos, chemical assays, MP4/WebM demonstration videos, or PDF reports stored persistently in Firebase Cloud Storage.
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-mono text-slate-400 mb-1.5 uppercase font-semibold">
-                    Evidence Description / Caption
+                    Evidence Section Summary / Overview Caption
                   </label>
                   <input
                     type="text"
@@ -514,30 +560,43 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                   />
                 </div>
 
-                {/* Upload Zone */}
-                <div className="border-2 border-dashed border-white/15 hover:border-emerald-500/60 rounded-2xl p-6 text-center transition-colors">
-                  <UploadCloud className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                {/* Upload Zone (Drag and Drop enabled) */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDraggingFile(true);
+                  }}
+                  onDragLeave={() => setIsDraggingFile(false)}
+                  onDrop={handleDropFiles}
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                    isDraggingFile
+                      ? 'border-emerald-400 bg-emerald-500/10 scale-[1.01]'
+                      : 'border-white/15 hover:border-emerald-500/60 bg-white/[0.01]'
+                  }`}
+                >
+                  <UploadCloud className={`w-8 h-8 mx-auto mb-2 transition-transform ${isDraggingFile ? 'text-emerald-300 scale-110' : 'text-emerald-400'}`} />
                   <p className="text-xs text-slate-300 font-medium">
-                    Upload Evidence Image or Document to Cloud Storage
+                    Drag and drop files here, or browse from device
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Supports PNG, JPG, SVG, WebP, PDF (Stored in Firebase Storage bucket)
+                  <p className="text-[11px] text-slate-400 mt-1 font-mono">
+                    Supports Images (JPG, PNG, WEBP), Videos (MP4, WEBM, MOV), and PDFs (Stored in Firebase Storage bucket)
                   </p>
 
-                  <div className="mt-4 flex items-center justify-center gap-3">
-                    <label className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono cursor-pointer transition-colors">
-                      <span>Select Evidence File</span>
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                    <label className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono cursor-pointer transition-colors shadow-md">
+                      <span>Select Images / Videos</span>
                       <input
                         type="file"
-                        accept="image/*,application/pdf"
+                        multiple
+                        accept="image/*,video/*"
                         onChange={handleEvidenceFileUpload}
                         className="hidden"
                         disabled={isUploadingFile}
                       />
                     </label>
 
-                    <label className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs font-mono cursor-pointer transition-colors">
-                      <span>Upload PDF Submission</span>
+                    <label className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs font-mono cursor-pointer transition-colors border border-white/10">
+                      <span>Upload Document (PDF)</span>
                       <input
                         type="file"
                         accept="application/pdf"
@@ -556,42 +615,91 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                   )}
                 </div>
 
-                {/* Uploaded Evidence Items List */}
+                {/* Uploaded Evidence Items List with caption/description editor */}
                 {evidenceItems.length > 0 && (
                   <div className="space-y-3">
-                    <span className="text-xs font-mono text-slate-400 uppercase font-semibold">
-                      Attached Evidence Items ({evidenceItems.length})
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono text-slate-400 uppercase font-semibold">
+                        Attached Evidence Items ({evidenceItems.length})
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400">
+                        Editable title, caption & technical description
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
                       {evidenceItems.map((item, idx) => (
                         <div
                           key={item.id || idx}
-                          className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-3 text-xs"
+                          className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col gap-3 text-xs"
                         >
-                          <div className="flex items-center gap-2.5 truncate">
-                            {item.type === 'image' ? (
-                              <img
-                                src={item.url}
-                                alt={item.name}
-                                className="w-9 h-9 rounded-lg object-cover bg-black shrink-0 border border-white/10"
-                              />
-                            ) : (
-                              <FileText className="w-8 h-8 text-emerald-400 shrink-0" />
-                            )}
-                            <div className="truncate">
-                              <p className="text-slate-200 font-medium truncate">{item.name}</p>
-                              <span className="text-[10px] text-slate-400 font-mono">{item.fileSize || 'Cloud File'}</span>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 truncate">
+                              {item.type === 'image' ? (
+                                <img
+                                  src={item.url}
+                                  alt={item.name}
+                                  className="w-11 h-11 rounded-lg object-cover bg-black shrink-0 border border-white/10"
+                                />
+                              ) : item.type === 'video' ? (
+                                <div className="w-11 h-11 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                                  <Video className="w-5 h-5" />
+                                </div>
+                              ) : (
+                                <div className="w-11 h-11 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+                                  <FileText className="w-5 h-5" />
+                                </div>
+                              )}
+                              <div className="truncate">
+                                <span className="font-mono text-[10px] text-emerald-400 uppercase tracking-wider font-bold">
+                                  {item.type} • {item.fileSize || 'Persistent Cloud Storage'}
+                                </span>
+                                <input
+                                  type="text"
+                                  value={item.name}
+                                  onChange={(e) => handleUpdateEvidenceItem(item.id, 'name', e.target.value)}
+                                  placeholder="Item name..."
+                                  className="w-full bg-transparent text-white font-medium focus:outline-none focus:border-b border-emerald-500/50"
+                                />
+                              </div>
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setEvidenceItems((prev) => prev.filter((_, i) => i !== idx))}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors shrink-0"
+                              title="Remove file"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => setEvidenceItems((prev) => prev.filter((_, i) => i !== idx))}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors"
-                            title="Remove file"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                            <div>
+                              <label className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                                Caption / Label
+                              </label>
+                              <input
+                                type="text"
+                                value={item.caption || ''}
+                                onChange={(e) => handleUpdateEvidenceItem(item.id, 'caption', e.target.value)}
+                                placeholder="e.g. PCB Component Deconstruction"
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500/60"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                                Description / Notes
+                              </label>
+                              <input
+                                type="text"
+                                value={item.description || ''}
+                                onChange={(e) => handleUpdateEvidenceItem(item.id, 'description', e.target.value)}
+                                placeholder="e.g. Visual verification of lead-free solder points"
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500/60"
+                              />
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -601,7 +709,7 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                 {/* PDF Link Direct Input */}
                 <div>
                   <label className="block text-xs font-mono text-slate-400 mb-1.5 uppercase font-semibold">
-                    PDF Document URL
+                    PDF Document URL (Academic Submission)
                   </label>
                   <input
                     type="url"
@@ -773,20 +881,38 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
             )}
           </form>
 
-          {/* Footer Bar */}
-          <div className="p-4 sm:p-6 bg-[#05080c] border-t border-white/10 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-mono text-xs transition-colors"
-            >
-              Cancel
-            </button>
-
-            <div className="flex items-center gap-3">
+          {/* Footer Bar with Save Draft & Publish Buttons */}
+          <div className="p-4 sm:p-6 bg-[#05080c] border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={handleSubmit}
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-mono text-xs transition-colors"
+              >
+                Cancel
+              </button>
+
+              <span className="text-[11px] font-mono text-slate-400 hidden md:inline">
+                Status: {isPublished ? 'Live on Website' : 'Admin Draft'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              {/* Save Draft Button */}
+              <button
+                type="button"
+                onClick={() => handleSaveActivity(false)}
+                disabled={isSaving}
+                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white font-semibold font-mono text-xs flex items-center gap-2 border border-white/10 transition-colors disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <EyeOff className="w-3.5 h-3.5 text-amber-400" />}
+                <span>Save Draft</span>
+              </button>
+
+              {/* Publish to Cloud Button */}
+              <button
+                type="button"
+                onClick={() => handleSaveActivity(true)}
                 disabled={isSaving}
                 className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] disabled:opacity-50"
               >
@@ -797,8 +923,8 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
-                    <span>{editingActivity ? 'Update Activity' : 'Save & Publish to Cloud'}</span>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{editingActivity ? 'Publish & Update' : 'Publish to Cloud'}</span>
                   </>
                 )}
               </button>

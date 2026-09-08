@@ -17,7 +17,10 @@ import {
   Share2, 
   Check,
   Leaf,
-  ShieldCheck
+  ShieldCheck,
+  Video,
+  Film,
+  Play
 } from 'lucide-react';
 import { Assignment, AdminUser, EvidenceItem } from '../../types';
 import { LightboxModal } from '../LightboxModal';
@@ -140,15 +143,28 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
 
         {/* HERO TITLE SECTION (Matching Reference Screenshot 2) */}
         <div className="space-y-4">
-          {/* Small Green Header Label: ACTIVITY 01 / E-WASTE & ENVIRONMENTAL MANAGEMENT */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-mono font-bold tracking-widest text-[#00ff88] uppercase">
-              ACTIVITY {formattedNum}
-            </span>
-            <span className="text-slate-600 font-mono text-xs">/</span>
-            <span className="text-xs sm:text-sm font-mono font-medium tracking-wider text-slate-400 uppercase">
-              {activity.subject}
-            </span>
+          {/* Small Green Header Label: 01. ACTIVITY INFORMATION */}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-mono font-bold tracking-widest text-[#00ff88] uppercase">
+                01. ACTIVITY INFORMATION • ACTIVITY {formattedNum}
+              </span>
+              <span className="text-slate-600 font-mono text-xs">/</span>
+              <span className="text-xs sm:text-sm font-mono font-medium tracking-wider text-slate-400 uppercase">
+                {activity.subject}
+              </span>
+            </div>
+
+            {/* Prominent Admin Quick Edit Button */}
+            {adminUser?.isAdmin && (
+              <button
+                onClick={() => onEditActivity(activity)}
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/25 transition-all hover:scale-105"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>[ EDIT ACTIVITY ]</span>
+              </button>
+            )}
           </div>
 
           {/* HUGE Editorial Display Typography: ACTIVITY 01 */}
@@ -202,7 +218,7 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
         <div className="space-y-8 sm:space-y-12">
 
           {/* ------------------------------------------------------------ */}
-          {/* SECTION 01 / 02. OBJECTIVE */}
+          {/* SECTION 02. OBJECTIVE */}
           {/* ------------------------------------------------------------ */}
           <div className="rounded-2xl bg-[#090d14]/70 border border-white/10 p-6 sm:p-8 md:p-10 shadow-2xl space-y-4">
             <div className="flex items-center gap-2 text-xs sm:text-sm font-mono font-bold tracking-widest text-[#00ff88] uppercase">
@@ -214,7 +230,7 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
           </div>
 
           {/* ------------------------------------------------------------ */}
-          {/* SECTION 02 / 03. EVIDENCE (Evidence Gallery + Posters + PDF) */}
+          {/* SECTION 03. EVIDENCE (Evidence Gallery + Posters + PDF) */}
           {/* ------------------------------------------------------------ */}
           <div className="rounded-2xl bg-[#090d14]/70 border border-white/10 p-6 sm:p-8 md:p-10 shadow-2xl space-y-6">
             <div className="flex items-center justify-between">
@@ -232,7 +248,7 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
               </p>
             )}
 
-            {/* Evidence Image Gallery (Matches Screenshot 2 Commitment Poster display) */}
+            {/* Evidence Artifacts Gallery (Images, Videos, PDFs) */}
             {activity.evidenceItems && activity.evidenceItems.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 {activity.evidenceItems.map((item) => (
@@ -254,8 +270,48 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                           <span className="px-4 py-2 rounded-xl bg-white/90 text-slate-950 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg">
                             <Maximize2 className="w-3.5 h-3.5" />
-                            Enlarge Evidence
+                            Enlarge Image
                           </span>
+                        </div>
+                      </div>
+                    ) : item.type === 'video' ? (
+                      <div className="relative w-full bg-slate-950 flex flex-col items-center justify-center">
+                        <video
+                          src={item.url}
+                          controls
+                          preload="metadata"
+                          className="w-full aspect-video bg-black rounded-t-xl"
+                        >
+                          Your browser does not support HTML5 video playback.
+                        </video>
+                      </div>
+                    ) : item.type === 'pdf' ? (
+                      <div className="p-8 flex flex-col items-center justify-center text-center bg-white/[0.03] aspect-[4/3]">
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mb-3">
+                          <FileText className="w-7 h-7" />
+                        </div>
+                        <span className="font-mono text-sm font-semibold text-white px-2 truncate max-w-full">
+                          {item.name}
+                        </span>
+                        <span className="text-xs text-slate-400 font-mono mt-1 mb-4">
+                          PDF Document • {item.fileSize || 'Standard'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => onOpenPdfViewer({ ...activity, pdfUrl: item.url, title: item.name })}
+                            className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono flex items-center gap-1.5 transition-colors shadow-sm"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            Preview PDF
+                          </button>
+                          <a
+                            href={item.url}
+                            download={item.name || 'document.pdf'}
+                            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-mono text-xs flex items-center gap-1.5 transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5 text-emerald-400" />
+                            Download
+                          </a>
                         </div>
                       </div>
                     ) : (
@@ -266,21 +322,32 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
                       </div>
                     )}
 
-                    {/* Caption Bar */}
-                    <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-between text-xs">
-                      <div className="truncate pr-2">
-                        <p className="text-slate-200 font-medium truncate">{item.name}</p>
-                        {item.caption && (
-                          <p className="text-slate-400 text-[11px] truncate mt-0.5">{item.caption}</p>
+                    {/* Metadata & Caption Bar */}
+                    <div className="p-4 bg-black/40 border-t border-white/5 flex flex-col gap-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="truncate pr-2">
+                          <p className="text-slate-200 font-medium truncate">{item.name}</p>
+                        </div>
+                        {item.type === 'image' && (
+                          <button
+                            onClick={() => setSelectedImage(item)}
+                            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors shrink-0"
+                            title="Enlarge"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                          </button>
                         )}
                       </div>
-                      <button
-                        onClick={() => setSelectedImage(item)}
-                        className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors shrink-0"
-                        title="Enlarge"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </button>
+                      {item.caption && (
+                        <p className="text-emerald-400/90 font-mono text-[11px] font-medium">
+                          Caption: {item.caption}
+                        </p>
+                      )}
+                      {item.description && (
+                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                          {item.description}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
