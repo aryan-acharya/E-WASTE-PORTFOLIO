@@ -1,12 +1,8 @@
 import React from 'react';
-import { ChevronUp, GraduationCap, Heart, Sparkles, Lock } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { PROFILE_DATA } from '../lib/data/profile';
 
-interface FooterProps {
-  onOpenAdminAuth?: () => void;
-}
-
-export const Footer: React.FC<FooterProps> = ({ onOpenAdminAuth }) => {
+export const Footer: React.FC = () => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -38,18 +34,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdminAuth }) => {
             </p>
             <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
               <span>Digital Repository for Coursework Submissions</span>
-              {onOpenAdminAuth && (
-                <>
-                  <span>•</span>
-                  <button
-                    onClick={onOpenAdminAuth}
-                    className="hover:text-emerald-500 transition-colors inline-flex items-center gap-1 text-[11px] font-semibold"
-                  >
-                    <Lock className="w-3 h-3 text-emerald-500" />
-                    <span>Admin</span>
-                  </button>
-                </>
-              )}
             </p>
           </div>
 

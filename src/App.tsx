@@ -1,44 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { NavSection, SubjectName, Assignment, AdminUser } from './types';
+import { NavSection, SubjectName, Assignment } from './types';
 import { Navbar } from './components/Navbar';
-import { Hero } from './components/Hero';
+import { HeroTitle } from './components/HeroTitle';
+import { GlobalGlobeSection } from './components/globe/GlobalGlobeSection';
+import { SubjectProfileCard } from './components/SubjectProfileCard';
 import { SubjectOverview } from './components/SubjectOverview';
 import { AssignmentsView } from './components/AssignmentsView';
-import { PdfViewerModal } from './components/PdfViewerModal';
 import { FloatingBlobs } from './components/FloatingBlobs';
 import { Footer } from './components/Footer';
-import { AdminAuthModal } from './components/AdminAuthModal';
 import { SUBJECTS_DATA } from './lib/data/subjects';
-import { 
-  subscribeToAssignments, 
-  saveAssignmentToFirestore, 
-  updateAssignmentInFirestore,
-  deleteAssignmentFromFirestore,
-  subscribeToAuthState
-} from './lib/firebase';
+import { subscribeToAssignments } from './lib/firebase';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<NavSection>('home');
-  const [activePdfAssignment, setActivePdfAssignment] = useState<Assignment | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
-
-  // Authentication state
-  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const isAdmin = currentUser?.isAdmin === true;
-
-  // Assignments state (Persisted in Firestore and synchronized in real-time)
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
-  // Listen to Auth State
-  useEffect(() => {
-    const unsubscribeAuth = subscribeToAuthState((user) => {
-      setCurrentUser(user);
-    });
-    return () => unsubscribeAuth();
-  }, []);
-
-  // Real-time Firestore synchronization across all users & devices
+  // Real-time Firestore synchronization for counts
   useEffect(() => {
     const unsubscribeFirestore = subscribeToAssignments(
       (firestoreAssignments) => {
@@ -52,42 +29,10 @@ export default function App() {
     return () => unsubscribeFirestore();
   }, []);
 
-  // Add Assignment (Admin only)
-  const handleAddAssignment = async (newAssignment: Assignment) => {
-    await saveAssignmentToFirestore(newAssignment, currentUser?.email);
-  };
-
-  // Update Assignment (Admin only)
-  const handleUpdateAssignment = async (updatedAssignment: Assignment) => {
-    await updateAssignmentInFirestore(updatedAssignment, currentUser?.email);
-  };
-
-  // Delete Assignment (Admin only)
-  const handleDeleteAssignment = async (id: string, pdfUrl?: string) => {
-    await deleteAssignmentFromFirestore(id, pdfUrl, currentUser?.email);
-  };
-
-  // Handle keyboard shortcut (⌘K or Ctrl+K) to focus search / switch to assignments
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setActiveSection('assignments');
-        const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-        if (searchInput) {
-          searchInput.focus();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   // Navigation action
   const handleNavigate = (section: NavSection) => {
     setActiveSection(section);
     
-    // Smooth scroll to relevant section
     if (section === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (section === 'overview') {
@@ -95,14 +40,14 @@ export default function App() {
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       } else {
-        window.scrollTo({ top: 400, behavior: 'smooth' });
+        window.scrollTo({ top: 800, behavior: 'smooth' });
       }
     } else if (section === 'assignments') {
       const el = document.getElementById('assignments-section');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       } else {
-        window.scrollTo({ top: 800, behavior: 'smooth' });
+        window.scrollTo({ top: 1200, behavior: 'smooth' });
       }
     }
   };
@@ -123,22 +68,20 @@ export default function App() {
       <Navbar
         activeSection={activeSection}
         onNavigate={handleNavigate}
-        onOpenSearch={() => {
-          setActiveSection('assignments');
-          setTimeout(() => {
-            const input = document.querySelector('input[type="text"]') as HTMLInputElement;
-            if (input) input.focus();
-          }, 150);
-        }}
+        onOpenSearch={() => handleNavigate('assignments')}
         totalAssignmentsCount={assignments.length}
-        currentUser={currentUser}
-        onOpenAdminAuth={() => setIsAdminAuthModalOpen(true)}
       />
 
       {/* Main Page Content */}
       <main className="relative z-10">
-        {/* Hero Section */}
-        <Hero
+        {/* Existing Hero/Title section */}
+        <HeroTitle />
+
+        {/* NEW 3D GLOBE SECTION (Centerpiece Earth & Planetary E-Waste Monitor) */}
+        <GlobalGlobeSection />
+
+        {/* Existing Subject Information / Author card & Stats */}
+        <SubjectProfileCard
           onNavigate={handleNavigate}
           totalAssignmentsCount={assignments.length}
           totalSubjectsCount={SUBJECTS_DATA.length}
@@ -150,34 +93,12 @@ export default function App() {
           getAssignmentCountForSubject={getAssignmentCountForSubject}
         />
 
-        {/* Assignments Archive Section */}
-        <AssignmentsView
-          assignments={assignments}
-          isAdmin={isAdmin}
-          onAddAssignment={handleAddAssignment}
-          onUpdateAssignment={handleUpdateAssignment}
-          onDeleteAssignment={handleDeleteAssignment}
-          onViewPdf={(assignment) => setActivePdfAssignment(assignment)}
-          onOpenAdminAuth={() => setIsAdminAuthModalOpen(true)}
-          searchQueryProp={searchQuery}
-        />
+        {/* Assignments Section */}
+        <AssignmentsView />
       </main>
 
       {/* Footer */}
-      <Footer onOpenAdminAuth={() => setIsAdminAuthModalOpen(true)} />
-
-      {/* Interactive PDF Document Reader Modal */}
-      <PdfViewerModal
-        assignment={activePdfAssignment}
-        onClose={() => setActivePdfAssignment(null)}
-      />
-
-      {/* Admin Authentication & Control Portal Modal */}
-      <AdminAuthModal
-        isOpen={isAdminAuthModalOpen}
-        onClose={() => setIsAdminAuthModalOpen(false)}
-        currentUser={currentUser}
-      />
+      <Footer />
     </div>
   );
 }
