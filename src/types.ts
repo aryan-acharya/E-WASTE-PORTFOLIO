@@ -84,20 +84,7 @@ export interface Assignment {
   category?: AssignmentCategory;
   tagPill?: string; // e.g. "ACTIVITY"
   status: 'Completed' | 'Evaluated' | 'Submitted';
-  isPublished: boolean;
-  createdBy?: string;
-  uploadedBy?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AdminUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  isAdmin: boolean;
-  emailVerified?: boolean;
+  isPublished?: boolean;
 }
 
 export type SortOption = 'latest' | 'oldest' | 'title-asc' | 'title-desc' | 'week-asc' | 'week-desc';

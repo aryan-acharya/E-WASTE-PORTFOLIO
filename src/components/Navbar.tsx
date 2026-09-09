@@ -7,18 +7,15 @@ import {
   Search, 
   Menu, 
   X, 
-  GraduationCap,
-  ShieldCheck
+  GraduationCap
 } from 'lucide-react';
-import { NavSection, AdminUser } from '../types';
+import { NavSection } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 
 interface NavbarProps {
   activeSection: NavSection;
   onNavigate: (section: NavSection) => void;
   onOpenSearch?: () => void;
-  onOpenAdmin?: () => void;
-  adminUser?: AdminUser | null;
   totalAssignmentsCount: number;
 }
 
@@ -26,8 +23,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeSection,
   onNavigate,
   onOpenSearch,
-  onOpenAdmin,
-  adminUser,
   totalAssignmentsCount
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -160,22 +155,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Admin Management Button */}
-            {onOpenAdmin && (
-              <button
-                onClick={onOpenAdmin}
-                className={`px-3 py-2 rounded-2xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all duration-300 border ${
-                  adminUser?.isAdmin
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30 shadow-sm shadow-emerald-500/20'
-                    : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-slate-700/60'
-                }`}
-                title="Admin Authentication & Coursework Management"
-              >
-                <ShieldCheck className={`w-3.5 h-3.5 ${adminUser?.isAdmin ? 'text-emerald-400' : 'text-emerald-500'}`} />
-                <span>{adminUser?.isAdmin ? 'Admin Mode' : 'Admin'}</span>
-              </button>
-            )}
-
             {/* Theme Toggle */}
             <ThemeToggle />
 
@@ -225,28 +204,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </button>
                   );
                 })}
-
-                {onOpenAdmin && (
-                  <button
-                    onClick={() => {
-                      onOpenAdmin();
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all mt-1 ${
-                      adminUser?.isAdmin
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                      <span>{adminUser?.isAdmin ? 'Admin Console (Active)' : 'Admin Login'}</span>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
-                      SECURE
-                    </span>
-                  </button>
-                )}
               </div>
             </motion.div>
           )}

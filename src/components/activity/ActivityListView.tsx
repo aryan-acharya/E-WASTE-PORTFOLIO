@@ -2,48 +2,25 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   ArrowUpRight, 
-  Plus, 
   Search, 
-  ShieldCheck, 
-  Lock, 
-  Sparkles, 
-  FileText, 
-  Layers, 
-  Eye, 
-  SlidersHorizontal,
-  CheckCircle2,
-  Calendar,
-  ExternalLink
+  Sparkles
 } from 'lucide-react';
-import { Assignment, AdminUser, AssignmentCategory } from '../../types';
+import { Assignment, AssignmentCategory } from '../../types';
 
 interface ActivityListViewProps {
   assignments: Assignment[];
-  adminUser: AdminUser | null;
   onSelectActivity: (activity: Assignment) => void;
-  onOpenAddModal: () => void;
-  onOpenAdminAuth: () => void;
-  onOpenDashboard: () => void;
 }
 
 export const ActivityListView: React.FC<ActivityListViewProps> = ({
   assignments,
-  adminUser,
-  onSelectActivity,
-  onOpenAddModal,
-  onOpenAdminAuth,
-  onOpenDashboard
+  onSelectActivity
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<AssignmentCategory>('All');
 
   // Filter assignments based on search & category
   const filteredAssignments = assignments.filter((item) => {
-    // Only admin can see unpublished items; public visitors see published items
-    if (!adminUser?.isAdmin && item.isPublished === false) {
-      return false;
-    }
-
     const matchesCategory = 
       selectedCategory === 'All' || 
       item.category === selectedCategory || 
@@ -67,7 +44,7 @@ export const ActivityListView: React.FC<ActivityListViewProps> = ({
     <div className="w-full bg-[#05080c] text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-12 transition-colors">
       <div className="max-w-7xl mx-auto">
         
-        {/* Top Control Bar: Title, Search, Category filters, and Admin Actions */}
+        {/* Top Control Bar: Title and Category info */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-12 border-b border-white/10">
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -75,12 +52,6 @@ export const ActivityListView: React.FC<ActivityListViewProps> = ({
                 <Sparkles className="w-3.5 h-3.5" />
                 ACADEMIC COURSEWORK • SEM V
               </span>
-              {adminUser?.isAdmin && (
-                <span className="inline-flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  ADMIN MODE
-                </span>
-              )}
             </div>
             
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white font-sans">
@@ -89,37 +60,6 @@ export const ActivityListView: React.FC<ActivityListViewProps> = ({
             <p className="text-sm sm:text-base text-slate-400 mt-2 max-w-2xl font-light">
               Interactive archival portfolio of research, practical engineering laboratory teardowns, and sustainable hardware analyses.
             </p>
-          </div>
-
-          {/* Admin and Search controls */}
-          <div className="flex flex-wrap items-center gap-3">
-            {adminUser?.isAdmin ? (
-              <>
-                <button
-                  onClick={onOpenAddModal}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Plus className="w-4 h-4 stroke-[3]" />
-                  Add Assignment
-                </button>
-                <button
-                  onClick={onOpenDashboard}
-                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-sm border border-white/10 flex items-center gap-2 transition-colors"
-                >
-                  <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
-                  Dashboard
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={onOpenAdminAuth}
-                className="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 hover:text-emerald-300 text-xs font-mono font-bold border border-emerald-500/30 flex items-center gap-2 shadow-sm shadow-emerald-950/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                title="Admin Authentication"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Admin Login</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -173,7 +113,6 @@ export const ActivityListView: React.FC<ActivityListViewProps> = ({
             filteredAssignments.map((assignment, index) => {
               const actNum = assignment.activityNumber || index + 1;
               const formattedNum = String(actNum).padStart(2, '0');
-              const isDraft = assignment.isPublished === false;
 
               return (
                 <motion.div
@@ -191,11 +130,6 @@ export const ActivityListView: React.FC<ActivityListViewProps> = ({
                       <span className="font-mono text-xs sm:text-sm text-slate-400 group-hover:text-emerald-400 transition-colors tracking-wider font-semibold">
                         Activity {formattedNum}
                       </span>
-                      {isDraft && (
-                        <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          DRAFT
-                        </span>
-                      )}
                     </div>
 
                     {/* Subtitle / Description teaser */}

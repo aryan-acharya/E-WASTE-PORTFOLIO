@@ -7,46 +7,33 @@ import {
   ExternalLink, 
   FileText, 
   Maximize2, 
-  Edit3, 
-  Trash2, 
-  Eye, 
-  EyeOff, 
   Calendar, 
   CheckCircle2, 
   Sparkles, 
   Share2, 
   Check,
   Leaf,
-  ShieldCheck,
   Video,
   Film,
   Play
 } from 'lucide-react';
-import { Assignment, AdminUser, EvidenceItem } from '../../types';
+import { Assignment, EvidenceItem } from '../../types';
 import { LightboxModal } from '../LightboxModal';
 
 interface ActivityDetailViewProps {
   activity: Assignment;
   allActivities: Assignment[];
-  adminUser: AdminUser | null;
   onBack: () => void;
   onSelectActivity: (activity: Assignment) => void;
   onOpenPdfViewer: (activity: Assignment) => void;
-  onEditActivity: (activity: Assignment) => void;
-  onDeleteActivity: (activity: Assignment) => void;
-  onTogglePublish: (activity: Assignment) => void;
 }
 
 export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
   activity,
   allActivities,
-  adminUser,
   onBack,
   onSelectActivity,
-  onOpenPdfViewer,
-  onEditActivity,
-  onDeleteActivity,
-  onTogglePublish
+  onOpenPdfViewer
 }) => {
   const [selectedImage, setSelectedImage] = useState<EvidenceItem | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -91,40 +78,6 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
             <span>← ALL ACTIVITIES</span>
           </button>
 
-          {/* Admin Management Toolbar */}
-          {adminUser?.isAdmin && (
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-1.5 rounded-2xl">
-              <button
-                onClick={() => onTogglePublish(activity)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 transition-colors ${
-                  activity.isPublished
-                    ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                    : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                }`}
-                title={activity.isPublished ? 'Unpublish' : 'Publish'}
-              >
-                {activity.isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                <span>{activity.isPublished ? 'Published' : 'Draft'}</span>
-              </button>
-
-              <button
-                onClick={() => onEditActivity(activity)}
-                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Edit</span>
-              </button>
-
-              <button
-                onClick={() => onDeleteActivity(activity)}
-                className="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs font-mono font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete</span>
-              </button>
-            </div>
-          )}
-
           {/* Share & Meta info */}
           <div className="flex items-center gap-3">
             <button
@@ -154,17 +107,6 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
                 {activity.subject}
               </span>
             </div>
-
-            {/* Prominent Admin Quick Edit Button */}
-            {adminUser?.isAdmin && (
-              <button
-                onClick={() => onEditActivity(activity)}
-                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/25 transition-all hover:scale-105"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>[ EDIT ACTIVITY ]</span>
-              </button>
-            )}
           </div>
 
           {/* HUGE Editorial Display Typography: ACTIVITY 01 */}

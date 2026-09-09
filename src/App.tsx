@@ -1,6 +1,6 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Globe2, ExternalLink } from 'lucide-react';
-import { NavSection, SubjectName, Assignment, AdminUser } from './types';
+import { NavSection, SubjectName } from './types';
 import { Navbar } from './components/Navbar';
 import { HeroTitle } from './components/HeroTitle';
 import { SubjectProfileCard } from './components/SubjectProfileCard';
@@ -8,10 +8,8 @@ import { SubjectOverview } from './components/SubjectOverview';
 import { AssignmentsView } from './components/AssignmentsView';
 import { FloatingBlobs } from './components/FloatingBlobs';
 import { Footer } from './components/Footer';
-import { AdminAuthModal } from './components/AdminAuthModal';
-import { AdminRouteView } from './components/admin/AdminRouteView';
 import { SUBJECTS_DATA } from './lib/data/subjects';
-import { subscribeToAssignments, subscribeToAuthState } from './lib/firebase';
+import { ASSIGNMENTS } from './lib/data/assignments';
 
 // Lazy-load the 3D globe section so it does not block initial page rendering
 const GlobalGlobeSection = lazy(() =>
@@ -20,73 +18,6 @@ const GlobalGlobeSection = lazy(() =>
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<NavSection>('home');
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-  const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  // URL route detection (/admin or #admin)
-  const [currentPath, setCurrentPath] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.location.pathname.toLowerCase();
-    }
-    return '/';
-  });
-
-  const [currentHash, setCurrentHash] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.location.hash.toLowerCase();
-    }
-    return '';
-  });
-
-  // Track popstate and hashchange
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setCurrentPath(window.location.pathname.toLowerCase());
-      setCurrentHash(window.location.hash.toLowerCase());
-    };
-
-    window.addEventListener('popstate', handleLocationChange);
-    window.addEventListener('hashchange', handleLocationChange);
-    return () => {
-      window.removeEventListener('popstate', handleLocationChange);
-      window.removeEventListener('hashchange', handleLocationChange);
-    };
-  }, []);
-
-  // Subscribe to Auth state
-  useEffect(() => {
-    const unsubscribeAuth = subscribeToAuthState((user) => {
-      setAdminUser(user);
-      setAuthLoading(false);
-    });
-    return () => unsubscribeAuth();
-  }, []);
-
-  // Real-time Firestore synchronization for counts
-  useEffect(() => {
-    const unsubscribeFirestore = subscribeToAssignments(
-      (firestoreAssignments) => {
-        setAssignments(firestoreAssignments);
-      },
-      (error) => {
-        console.warn('Firestore subscription status:', error);
-      }
-    );
-
-    return () => unsubscribeFirestore();
-  }, []);
-
-  const navigateToPortfolio = () => {
-    if (window.location.pathname.toLowerCase().startsWith('/admin')) {
-      window.history.pushState({}, '', '/');
-      setCurrentPath('/');
-    }
-    window.location.hash = '';
-    setCurrentHash('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   // Navigation action
   const handleNavigate = (section: NavSection) => {
@@ -113,34 +44,11 @@ export default function App() {
 
   // Subject count helper
   const getAssignmentCountForSubject = (subjectName: SubjectName) => {
-    return assignments.filter((a) => a.subject === subjectName).length;
+    return ASSIGNMENTS.filter((a) => a.subject === subjectName).length;
   };
 
   const totalCredits = SUBJECTS_DATA.reduce((acc, curr) => acc + curr.credits, 0);
   const isVercelProduction = typeof window !== 'undefined' && window.location.hostname === 'e-waste-portfolio-seven.vercel.app';
-
-  const isAdminRoute = currentPath === '/admin' || currentPath === '/admin/' || currentHash === '#admin';
-
-  // Dedicated Protected Route View for /admin or #admin
-  if (isAdminRoute) {
-    return (
-      <AdminRouteView
-        adminUser={adminUser}
-        authLoading={authLoading}
-        assignments={assignments}
-        onReturnToPortfolio={navigateToPortfolio}
-        onOpenAddModal={() => {}}
-        onOpenEditModal={() => {}}
-        onViewAssignment={(assignment) => {
-          navigateToPortfolio();
-          setTimeout(() => {
-            const el = document.getElementById(`assignment-${assignment.id}`) || document.getElementById('assignments-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }, 150);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 relative transition-colors duration-300 font-sans selection:bg-emerald-500 selection:text-white">
@@ -173,16 +81,7 @@ export default function App() {
         activeSection={activeSection}
         onNavigate={handleNavigate}
         onOpenSearch={() => handleNavigate('assignments')}
-        onOpenAdmin={() => {
-          if (adminUser?.isAdmin) {
-            window.location.hash = '#admin';
-            setCurrentHash('#admin');
-          } else {
-            setIsAdminAuthOpen(true);
-          }
-        }}
-        adminUser={adminUser}
-        totalAssignmentsCount={assignments.length}
+        totalAssignmentsCount={ASSIGNMENTS.length}
       />
 
       {/* Main Page Content */}
@@ -219,7 +118,7 @@ export default function App() {
         {/* Existing Subject Information / Author card & Stats */}
         <SubjectProfileCard
           onNavigate={handleNavigate}
-          totalAssignmentsCount={assignments.length}
+          totalAssignmentsCount={ASSIGNMENTS.length}
           totalSubjectsCount={SUBJECTS_DATA.length}
           totalCredits={totalCredits}
         />
@@ -235,17 +134,6 @@ export default function App() {
 
       {/* Footer */}
       <Footer />
-
-      {/* Global Admin Authentication Modal */}
-      <AdminAuthModal
-        isOpen={isAdminAuthOpen}
-        currentUser={adminUser}
-        onClose={() => setIsAdminAuthOpen(false)}
-        onOpenManagementConsole={() => {
-          window.location.hash = '#admin';
-          setCurrentHash('#admin');
-        }}
-      />
     </div>
   );
 }
