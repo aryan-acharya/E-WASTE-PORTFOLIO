@@ -49,9 +49,19 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const iframeSrc = (assignment.pdfUrl.startsWith('data:') || assignment.pdfUrl.startsWith('blob:'))
-    ? assignment.pdfUrl
-    : `${assignment.pdfUrl}#toolbar=0&navpanes=0`;
+  const pdfUrl = assignment.pdfUrl;
+  const isDataOrBlob = pdfUrl.startsWith('data:') || pdfUrl.startsWith('blob:');
+  const fullPdfUrl = isDataOrBlob 
+    ? pdfUrl 
+    : (pdfUrl.startsWith('http') ? pdfUrl : `${window.location.origin}${pdfUrl}`);
+
+  // Clean PDF URL without fragment lock for native browser PDF rendering
+  const cleanPdfUrl = isDataOrBlob ? pdfUrl : pdfUrl.split('#')[0];
+
+  // Helper to format reflection text
+  const reflectionText = typeof assignment.reflection === 'object' && assignment.reflection !== null
+    ? [assignment.reflection.whatSurprisedMe, assignment.reflection.whatChallengedMe, assignment.reflection.whatWillIDoDifferently].filter(Boolean).join(' ')
+    : String(assignment.reflection || '');
 
   return (
     <AnimatePresence>
@@ -111,7 +121,7 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
               </button>
 
               <a
-                href={assignment.pdfUrl}
+                href={cleanPdfUrl}
                 download
                 title="Download PDF file"
                 className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-colors"
@@ -141,7 +151,7 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
             </div>
 
             <a
-              href={assignment.pdfUrl}
+              href={cleanPdfUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 shrink-0"
@@ -155,21 +165,38 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 dark:bg-slate-950/60 space-y-4">
             
             {/* PDF View Container */}
-            <div className="w-full h-[520px] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden relative shadow-inner">
-              <iframe
-                src={iframeSrc}
-                className="w-full h-full border-0"
-                title={assignment.title}
-                onLoad={() => setIframeLoaded(true)}
-              />
+            <div className="w-full h-[560px] sm:h-[640px] rounded-2xl bg-[#090d14] border border-slate-200 dark:border-slate-800 overflow-hidden relative shadow-inner flex flex-col">
+              <object
+                data={cleanPdfUrl}
+                type="application/pdf"
+                className="w-full h-full rounded-2xl"
+              >
+                <embed
+                  src={cleanPdfUrl}
+                  type="application/pdf"
+                  className="w-full h-full rounded-2xl"
+                />
+                <iframe
+                  src={cleanPdfUrl}
+                  className="w-full h-full border-0"
+                  title={assignment.title}
+                >
+                  <p className="p-4 text-center text-slate-400">
+                    Your browser does not support inline PDF previews.{' '}
+                    <a href={cleanPdfUrl} target="_blank" rel="noreferrer" className="text-emerald-400 underline">
+                      Click here to open the PDF.
+                    </a>
+                  </p>
+                </iframe>
+              </object>
 
               {assignment.description && (
-                <div className="absolute inset-x-0 bottom-0 p-3.5 bg-gradient-to-t from-slate-950/95 via-slate-900/80 to-transparent text-white backdrop-blur-sm flex items-center justify-between gap-3">
+                <div className="p-3.5 bg-slate-950/90 border-t border-slate-800 text-white backdrop-blur-sm flex items-center justify-between gap-3 shrink-0">
                   <p className="text-xs text-slate-200 line-clamp-2">
                     {assignment.description}
                   </p>
                   <a
-                    href={assignment.pdfUrl}
+                    href={cleanPdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-1 shadow shrink-0"
@@ -182,7 +209,7 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
             </div>
 
             {/* Academic Learning Breakdown Cards */}
-            {(assignment.whatILearned || assignment.sustainabilityConnection || assignment.reflection) && (
+            {(assignment.whatILearned || assignment.sustainabilityConnection || reflectionText) && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                 {/* WHAT I LEARNED */}
                 {assignment.whatILearned && (
@@ -211,14 +238,14 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
                 )}
 
                 {/* REFLECTION */}
-                {assignment.reflection && (
+                {reflectionText && (
                   <div className="p-4 rounded-2xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/50 shadow-sm">
                     <div className="flex items-center gap-2 font-mono font-bold text-xs text-purple-800 dark:text-purple-300 mb-1.5 uppercase">
                       <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
                       <span>Reflection</span>
                     </div>
                     <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                      {assignment.reflection}
+                      {reflectionText}
                     </p>
                   </div>
                 )}
