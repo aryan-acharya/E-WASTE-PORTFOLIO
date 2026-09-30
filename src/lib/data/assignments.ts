@@ -1,124 +1,7 @@
 import { Assignment } from '../../types';
 
-// High-fidelity SVG commitment pledge poster matching Reference
-export const COMMITMENT_POSTER_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1120" width="100%" height="100%">
-  <defs>
-    <linearGradient id="posterBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0e3a38" />
-      <stop offset="40%" stop-color="#145753" />
-      <stop offset="100%" stop-color="#0a2a29" />
-    </linearGradient>
-    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#f4fbf8" />
-    </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.35" />
-    </filter>
-  </defs>
-
-  <!-- Background Canvas -->
-  <rect width="800" height="1120" fill="url(#posterBg)" />
-
-  <!-- Botanical Leaf Accents in Background -->
-  <path d="M 0,380 C 120,380 180,480 180,600 C 180,720 80,820 0,840 Z" fill="#207a73" opacity="0.45" />
-  <path d="M 800,380 C 680,380 620,480 620,600 C 620,720 720,820 800,840 Z" fill="#207a73" opacity="0.45" />
-  <path d="M 0,200 C 90,200 140,280 140,380 C 140,460 70,520 0,540 Z" fill="#29968d" opacity="0.3" />
-  <path d="M 800,200 C 710,200 660,280 660,380 C 660,460 730,520 800,540 Z" fill="#29968d" opacity="0.3" />
-
-  <!-- Decorative Top Globe Watermark -->
-  <circle cx="400" cy="180" r="140" fill="none" stroke="#2db8ab" stroke-width="2" opacity="0.2" stroke-dasharray="8 8" />
-  <ellipse cx="400" cy="180" rx="140" ry="50" fill="none" stroke="#2db8ab" stroke-width="1.5" opacity="0.2" />
-
-  <!-- Header Section -->
-  <text x="400" y="120" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="900" font-size="44" fill="#6ee7b7" letter-spacing="4">
-    MY COMMITMENT
-  </text>
-  <text x="400" y="165" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="28" fill="#a7f3d0" letter-spacing="6">
-    TO A
-  </text>
-  <text x="400" y="220" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="900" font-size="52" fill="#ffffff" letter-spacing="3">
-    SUSTAINABLE FUTURE
-  </text>
-
-  <!-- Central White Commitment Parchment -->
-  <rect x="90" y="270" width="620" height="740" rx="24" fill="url(#cardGrad)" filter="url(#shadow)" />
-  <rect x="92" y="272" width="616" height="736" rx="22" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.6" />
-
-  <!-- Parchment Pledge Title -->
-  <text x="400" y="340" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="22" fill="#064e3b">
-    I pledge to be a responsible engineer 👩‍💻 and a
-  </text>
-  <text x="400" y="372" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="22" fill="#064e3b">
-    conscious citizen 🌏.
-  </text>
-
-  <!-- Pledge Bullet Points -->
-  <g transform="translate(140, 420)">
-    <!-- Point 1 -->
-    <text x="260" y="30" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22">♻️</text>
-    <text x="260" y="62" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="18" fill="#0f766e">
-      I will use technology wisely.
-    </text>
-
-    <!-- Point 2 -->
-    <text x="260" y="105" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22">🌱</text>
-    <text x="260" y="137" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="18" fill="#0f766e">
-      I will reduce waste and conserve resources.
-    </text>
-
-    <!-- Point 3 -->
-    <text x="260" y="180" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22">📱</text>
-    <text x="260" y="212" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="18" fill="#0f766e">
-      I will dispose of e-waste responsibly.
-    </text>
-
-    <!-- Point 4 -->
-    <text x="260" y="255" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22">💡</text>
-    <text x="260" y="287" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="17" fill="#0f766e">
-      I will embrace sustainable practices in my
-    </text>
-    <text x="260" y="312" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="17" fill="#0f766e">
-      personal and professional life.
-    </text>
-
-    <!-- Point 5 -->
-    <text x="260" y="355" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22">🤝</text>
-    <text x="260" y="387" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="18" fill="#0f766e">
-      I will inspire others to protect and care for
-    </text>
-    <text x="260" y="412" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="18" fill="#0f766e">
-      our environment.
-    </text>
-  </g>
-
-  <!-- Banner Message -->
-  <text x="400" y="870" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="17" fill="#047857">
-    Together, let's build a cleaner, greener, and more
-  </text>
-  <text x="400" y="896" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="17" fill="#047857">
-    sustainable future! 🌍✨
-  </text>
-
-  <!-- Signature Box -->
-  <line x1="240" y1="920" x2="560" y2="920" stroke="#d1fae5" stroke-width="1.5" />
-  <text x="400" y="942" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="14" fill="#065f46">
-    ✍️ Student Commitment
-  </text>
-  <text x="400" y="962" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="600" font-size="13" fill="#0f766e">
-    Name: Aryan Acharya • Roll No: 24101C0022
-  </text>
-  <text x="400" y="980" text-anchor="middle" font-family="monospace" font-size="12" fill="#047857">
-    Signature: Aryan Acharya • Date: July 2026
-  </text>
-
-  <!-- Bottom Poster Ribbon -->
-  <text x="400" y="1060" text-anchor="middle" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="15" fill="#a7f3d0" letter-spacing="1">
-    💚 Think Green • Innovate Responsibly • Act Sustainably 🌿
-  </text>
-</svg>
-`)}`;
+// Signed commitment pledge poster for Activity 01
+export const COMMITMENT_POSTER_SVG = '/assignments/activity-01/commitment-pledge.png';
 
 export const ASSIGNMENTS: Assignment[] = [
   {
@@ -140,11 +23,11 @@ export const ASSIGNMENTS: Assignment[] = [
     evidenceItems: [
       {
         id: 'ev-1',
-        url: COMMITMENT_POSTER_SVG,
+        url: '/assignments/activity-01/commitment-pledge.png',
         name: 'My Commitment to a Sustainable Future (Signed Pledge Poster)',
         type: 'image',
         caption: 'Student Commitment Pledge: Aryan Acharya (Roll No. 24101C0022)',
-        fileSize: '420 KB'
+        fileSize: '645 KB'
       },
       {
         id: 'ev-1-pdf',
@@ -155,7 +38,7 @@ export const ASSIGNMENTS: Assignment[] = [
         fileSize: '1.4 MB'
       }
     ],
-    coverImageUrl: COMMITMENT_POSTER_SVG,
+    coverImageUrl: '/assignments/activity-01/commitment-pledge.png',
 
     // What I Learned (~150 words)
     whatILearned: 'Through analyzing global e-waste trajectories, I learned that improper hardware disposal releases toxic heavy metals such as lead, mercury, and cadmium into ground soil while exhausting non-renewable rare earth minerals. Understanding the end-to-end lifecycle of consumer electronics reveals that hardware longevity is heavily dictated by software optimization, repairability, and modular system design. As an IT engineering student, I realized that writing efficient code and advocating for open technical documentation directly extends component lifespans, reducing premature device obsolescence across modern digital infrastructures.',
