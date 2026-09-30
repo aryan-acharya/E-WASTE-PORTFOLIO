@@ -90,49 +90,46 @@ export const ASSIGNMENTS: Assignment[] = [
     weekNumber: 3,
     submissionDate: '2026-08-12',
     shortDescription: 'Empirical disassembly and toxicological material mapping of legacy computing motherboards, capacitors, and silicon chipsets.',
-    description: 'Conduct a forensic laboratory teardown of obsolete desktop computing hardware to classify polymers, trace toxic halogenated flame retardants, and calculate recovery ratios.',
-    objective: 'To conduct a hands-on physical teardown of legacy IT hardware, mapping each modular component against RoHS directives and establishing an empirical bill-of-materials recyclability score.',
-    evidenceDescription: 'Teardown bench photographic audit documenting battery containment, circuit deconstruction, and classified metal bins.',
+    description: 'To test and demonstrate comprehensive knowledge of e-waste metrics, regional Indian state statistics (Maharashtra, Delhi, Bihar), hazardous metal testing protocols (TCLP, Lead), and sustainable recycling channels through an interactive crossword assessment.',
+    objective: 'To test and demonstrate comprehensive knowledge of e-waste metrics, regional Indian state statistics (Maharashtra, Delhi, Bihar), hazardous metal testing protocols (TCLP, Lead), and sustainable recycling channels through an interactive crossword assessment.',
+    evidenceDescription: 'Official E-Waste Mastermind crossword assessment certifying knowledge of regional WEEE metrics, TCLP testing protocols, hazardous metals, and circular recycling pathways.',
     evidenceItems: [
       {
-        id: 'ev-2-1',
-        url: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=1200&q=80',
-        name: 'Motherboard Disassembly & Microchip Inspection',
-        type: 'image',
-        caption: 'Component breakdown identifying lead solder and electrolytic capacitors',
-        fileSize: '2.1 MB'
-      },
-      {
         id: 'ev-2-pdf',
-        url: '/assignments/activity-02/assignment.pdf',
-        name: 'Hardware Teardown Lab Audit PDF',
+        url: '/assignments/activity-02/Crossword.pdf',
+        name: 'E-Waste Mastermind Crossword Assessment',
         type: 'pdf',
-        caption: 'Component Recyclability & Hazardous Materials Breakdown',
-        fileSize: '2.3 MB'
+        caption: 'Interactive E-Waste Mastermind Crossword PDF for Activity 02',
+        fileSize: '71 KB'
       }
     ],
-    coverImageUrl: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=1200&q=80',
-    whatILearned: 'Disassembling complex PCBs revealed that modern solder alloys, while lead-free under EU RoHS, still integrate bismuth and silver which require specialized hydrometallurgical processing. Furthermore, adhesives used in thermal pads and casing severely impede high-speed recycling. Modular fasteners like hex-screws dramatically reduce disassembly time compared to ultrasonic welds.',
-    sustainabilityConnection: 'Directly supports Design-for-Disassembly (DfD) principles in computer engineering, proving that hardware can be stripped into pure feedstock in under 4 minutes if adhesive usage is minimized during industrial fabrication.',
+    coverImageUrl: '',
+    whatILearned: 'Solving the E-Waste Mastermind crossword reinforced key environmental statistics and regulatory standards governing e-waste in India. I learned that Maharashtra contributes the highest volume of WEEE (Waste Electrical and Electronic Equipment) in India, while Delhi records the highest per-capita e-waste generation, and Bihar records the lowest per-capita e-waste generation. Furthermore, the TCLP (Toxicity Characteristic Leaching Procedure) test determines hazardous waste levels, frequently detecting dangerous lead concentrations. Recognizing that 15–20% of e-waste is handled by the informal sector underscores the urgent necessity for standardized, formal recycling infrastructures and consumer awareness.',
+    sustainabilityConnection: 'Understanding regional e-waste generation metrics and toxic material profiles (such as lead, CFL lamp mercury, and plastics) directly informs responsible engineering decisions. It encourages designing products with non-hazardous material alternatives, establishing formal recycling pathways, and minimizing electronic waste accumulation in municipal landfills.',
     reflection: {
-      whatSurprisedMe: 'How pervasive glues and proprietary screws have become in consumer electronics compared to industrial-grade rack servers, artificially restricting repairs.',
-      whatChallengedMe: 'Safely discharging high-voltage CRT and PSU filter capacitors without shorting internal PCB traces or risking personal shock.',
-      whatWillIDoDifferently: 'Always prepare a certified ESD discharge resistor array and advocate for right-to-repair mechanical fasteners in all student hardware projects.'
+      whatSurprisedMe: 'That 15–20% of e-waste processing is driven by the informal sector, and that Maharashtra leads the country in total WEEE volume generation.',
+      whatChallengedMe: 'Distinguishing between per-capita generation rankings (Delhi vs. Bihar) and total state volume contributions (Maharashtra), alongside identifying specific regulatory testing acronyms like TCLP.',
+      whatWillIDoDifferently: 'Incorporate toxic material compliance checks (such as RoHS and TCLP standards) early in hardware system specification and technical documentation.'
     },
     references: [
       {
         id: 'ref-2-1',
-        text: 'EU Restriction of Hazardous Substances (RoHS) Directive 2011/65/EU',
-        url: 'https://environment.ec.europa.eu/topics/waste-and-recycling/rohs-directive_en'
+        text: 'Central Pollution Control Board (CPCB) India E-Waste Management Rules',
+        url: 'https://cpcb.nic.in/'
       },
       {
         id: 'ref-2-2',
-        text: 'iFixit Repairability Score Methodology & Criteria',
-        url: 'https://www.ifixit.com/'
+        text: 'Toxicity Characteristic Leaching Procedure (TCLP) EPA Method 1311',
+        url: 'https://www.epa.gov/'
+      },
+      {
+        id: 'ref-2-3',
+        text: 'India Ministry of Environment, Forest and Climate Change (MoEFCC) E-Waste Reports',
+        url: 'https://moef.gov.in/'
       }
     ],
-    pdfUrl: '/assignments/activity-02/assignment.pdf',
-    fileSize: '2.3 MB',
+    pdfUrl: '/assignments/activity-02/Crossword.pdf',
+    fileSize: '71 KB',
     type: 'Practical',
     category: 'Practicals',
     status: 'Evaluated',
