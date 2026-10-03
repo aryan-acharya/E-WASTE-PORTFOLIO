@@ -4,23 +4,14 @@ import {
   Recycle, 
   AlertTriangle, 
   Target, 
-  BookOpen, 
   CheckCircle2, 
-  Leaf, 
-  Globe, 
-  Cpu, 
-  ShieldAlert, 
-  Factory, 
   Scale, 
   RefreshCw, 
   Server, 
-  GraduationCap, 
-  Layers, 
   Zap, 
-  ArrowRight,
-  TrendingUp,
-  Flame,
-  Award
+  TrendingUp, 
+  Flame, 
+  Award 
 } from 'lucide-react';
 import { SubjectName } from '../types';
 
@@ -38,18 +29,6 @@ export const SubjectOverview: React.FC<SubjectOverviewProps> = () => {
     { text: 'Promoting sustainable technology', icon: <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> },
   ];
 
-  const keyTopics = [
-    { title: 'Introduction to E-Waste', desc: 'Understanding electronic waste definitions, categories, and historical growth trends.', icon: <BookOpen className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Sources of Electronic Waste', desc: 'Identifying household appliances, IT hardware, telecom gear, and consumer devices.', icon: <Cpu className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Environmental Impact', desc: 'Analyzing soil degradation, water contamination, and bioaccumulation from toxic leachates.', icon: <Globe className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Health Hazards', desc: 'Studying biological toxicity from lead, mercury, cadmium, and flame retardants.', icon: <ShieldAlert className="w-5 h-5 text-emerald-500" /> },
-    { title: 'E-Waste Management Techniques', desc: 'Implementing formal collection networks, safe storage, and segregation protocols.', icon: <Recycle className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Recycling Process', desc: 'Mastering mechanical shredding, hydrometallurgical leaching, and urban mining.', icon: <Factory className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Government Rules & Regulations', desc: 'Navigating E-Waste Management Rules 2022, PRO guidelines, and EPR compliance.', icon: <Scale className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Circular Economy', desc: 'Designing closed-loop product lifecycles, modular hardware, and Design for Disassembly.', icon: <RefreshCw className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Green Computing', desc: 'Optimizing data center PUE metrics, energy-efficient chips, and carbon footprints.', icon: <Server className="w-5 h-5 text-emerald-500" /> },
-    { title: 'Sustainable Development', desc: 'Aligning e-waste reduction with UN Sustainable Development Goals (SDGs 11, 12 & 13).', icon: <Leaf className="w-5 h-5 text-emerald-500" /> },
-  ];
 
   const learningOutcomes = [
     {
@@ -200,49 +179,6 @@ export const SubjectOverview: React.FC<SubjectOverviewProps> = () => {
           </div>
         </motion.div>
 
-        {/* Section 4: Key Topics Covered (10 Cards Grid) */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Syllabus Breakdown</span>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Key Topics Covered</h3>
-            </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800">
-              10 Core Modules
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {keyTopics.map((topic, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: idx * 0.04 }}
-                whileHover={{ y: -5 }}
-                className="p-4 rounded-[20px] glass-card border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-500/50 transition-all duration-200 flex flex-col justify-between group shadow-sm hover:shadow-md"
-              >
-                <div className="space-y-2.5">
-                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 w-fit group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                    {topic.icon}
-                  </div>
-                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-tight">
-                    {topic.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {topic.desc}
-                  </p>
-                </div>
-
-                <div className="mt-3 pt-2 border-t border-slate-200/40 dark:border-slate-800/40 flex items-center justify-between text-[10px] font-mono font-bold text-slate-400">
-                  <span>Topic #{idx + 1}</span>
-                  <ArrowRight className="w-3 h-3 text-emerald-500 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
         {/* Section 5: Learning Outcomes */}
         <div className="space-y-6">
