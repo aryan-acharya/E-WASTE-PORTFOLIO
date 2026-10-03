@@ -196,57 +196,54 @@ export const ASSIGNMENTS: Assignment[] = [
     activityNumber: 4,
     activityCode: 'ACTIVITY 04',
     slug: 'activity-04',
-    tagPill: 'REPORT',
-    title: 'Circular Tech & Campus E-Waste Audit Protocol',
+    tagPill: 'ACTIVITY',
+    title: 'DATA ANALYSIS',
     subject: 'E-Waste & Environmental Management',
     weekNumber: 7,
-    submissionDate: '2026-09-04',
-    shortDescription: 'Comprehensive campus-wide audit quantifying institutional electronic device turnover, storage accumulation, and certified recycling channels.',
-    description: 'Formulate an institutional EPR (Extended Producer Responsibility) policy and establish structured e-waste collection hubs across university departments.',
-    objective: 'To establish a standardized data audit workflow across 6 engineering campus laboratories to catalog retired monitors, UPS units, and compute clusters for certified refurbishing.',
-    evidenceDescription: 'Institutional inventory tracking sheet and campus collection kiosk architectural schematics.',
+    submissionDate: '2026-10-01',
+    shortDescription: 'E-Waste Generation & Recycling Data Analysis',
+    description: 'To analyze and interpret e-waste generation and recycling data across Asia, Europe, and the Americas using an interactive data analytics dashboard, with the aim of identifying regional differences in total generation, per-capita generation, recycling, and collection performance.',
+    objective: 'To analyze and interpret e-waste generation and recycling data across Asia, Europe, and the Americas using an interactive data analytics dashboard, with the aim of identifying regional differences in total generation, per-capita generation, recycling, and collection performance.',
+    evidenceDescription: 'Interactive E-Waste Atlas and Global E-Waste Intelligence Observatory data analytics dashboard comparing e-waste generation, per-capita metrics, and recycling performance across Asia, Europe, and the Americas.',
     evidenceItems: [
       {
-        id: 'ev-4-1',
-        url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80',
-        name: 'Campus E-Waste Categorization Facility',
-        type: 'image',
-        caption: 'Organized sorting of Li-ion power packs and peripheral cables for safe transfer',
-        fileSize: '2.4 MB'
-      },
-      {
         id: 'ev-4-pdf',
-        url: '/assignments/activity-04/assignment.pdf',
-        name: 'Campus IT Infrastructure Audit Report PDF',
+        url: '/assignments/activity-04/data-analytics-ewem.pdf',
+        name: 'data-analytics-ewem.pdf',
         type: 'pdf',
-        caption: 'Inventory Registry & Refurbishment Readiness Audit',
-        fileSize: '1.9 MB'
+        caption: 'Global E-Waste Intelligence Observatory: Interactive Data Analytics Dashboard Evidence',
+        fileSize: '148 KB'
       }
     ],
-    coverImageUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=80',
-    whatILearned: 'Over 62% of campus obsolete hardware was sitting idle in department storage due to security fears regarding hard drive data remanence. Implementing NIST 800-88 certified cryptographic media sanitization allowed dozens of desktop PCs to be safely donated to rural primary schools rather than scrapped.',
-    sustainabilityConnection: 'Demonstrates how IT engineering policies can unlock device reuse, prioritizing second-life deployment before physical materials recycling.',
+    coverImageUrl: '',
+    whatILearned: 'This activity helped me understand how data analytics can be used to interpret large-scale e-waste patterns and support environmental decision-making. I learned how different metrics, such as total e-waste generation, per-capita generation, recycled quantities, recycling rate, and collection rate, provide different perspectives on the e-waste problem. I also learned how interactive visualizations, filters, charts, and country-level comparisons can make complex environmental datasets easier to understand. Comparing continents showed me that total generation alone does not provide a complete picture, and that per-capita generation and recycling performance are also important when evaluating e-waste management.',
+    sustainabilityConnection: 'Data-driven analysis can help identify regions with high e-waste generation and areas where collection and recycling systems need improvement. Using reliable environmental data supports better planning of recycling infrastructure, resource recovery, and waste-management policies. It also helps engineers and organizations make informed decisions that can reduce e-waste accumulation and improve the recovery of valuable materials.',
     reflection: {
-      whatSurprisedMe: 'How easily data destruction protocols unlock hardware reuse — fear of data breach was the single largest obstacle to responsible disposition.',
-      whatChallengedMe: 'Coordinating cross-departmental inventory registries across varying legacy spreadsheet formats.',
-      whatWillIDoDifferently: 'Deploy an automated open-source asset tag barcode scanner web application to streamline equipment logging.'
+      whatSurprisedMe: 'I was surprised by how differently the same e-waste problem can appear depending on the metric being analyzed. A region may generate a large total quantity of e-waste, while another may have a higher per-capita generation or a different recycling performance. This showed me that relying on a single metric can give an incomplete understanding of the e-waste situation.',
+      whatChallengedMe: 'The main challenge was interpreting multiple e-waste metrics simultaneously and understanding the difference between total generation, per-capita generation, recycled quantity, recycling rate, and collection rate. It was also challenging to extract meaningful insights from the visualizations while avoiding conclusions based only on the size of the numbers.',
+      whatWillIDoDifferently: 'In future data-analysis projects, I will examine multiple related metrics before drawing conclusions and will pay closer attention to units, population differences, time periods, and the context behind the data. I will also use interactive visualizations and comparative charts more effectively to communicate environmental findings clearly.'
     },
     references: [
       {
         id: 'ref-4-1',
-        text: 'NIST Special Publication 800-88 Revision 1: Guidelines for Media Sanitization',
-        url: 'https://csrc.nist.gov/publications/detail/sp/800-88/rev-1/final'
+        text: 'United Nations Institute for Training and Research (UNITAR) & International Telecommunication Union (ITU), Global E-waste Monitor.',
+        url: 'https://ewastemonitor.info/'
       },
       {
         id: 'ref-4-2',
-        text: 'E-Waste (Management) Rules, Government of India Environmental Notification',
-        url: 'https://cpcb.nic.in/e-waste/'
+        text: 'United Nations Institute for Training and Research (UNITAR), Sustainable Cycles Programme.',
+        url: 'https://unitar.org/'
+      },
+      {
+        id: 'ref-4-3',
+        text: 'International Telecommunication Union (ITU), E-waste and the Circular Economy.',
+        url: 'https://www.itu.int/'
       }
     ],
-    pdfUrl: '/assignments/activity-04/assignment.pdf',
-    fileSize: '1.9 MB',
-    type: 'Report',
-    category: 'Reports',
+    pdfUrl: '/assignments/activity-04/data-analytics-ewem.pdf',
+    fileSize: '148 KB',
+    type: 'Activity',
+    category: 'Activities',
     status: 'Evaluated',
     isPublished: true
   }
