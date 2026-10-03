@@ -140,57 +140,54 @@ export const ASSIGNMENTS: Assignment[] = [
     activityNumber: 3,
     activityCode: 'ACTIVITY 03',
     slug: 'activity-03',
-    tagPill: 'RESEARCH',
-    title: 'Hydrometallurgical Precious Metal Leaching Analysis',
+    tagPill: 'ACTIVITY',
+    title: 'DEVICE ANATOMY',
     subject: 'E-Waste & Environmental Management',
     weekNumber: 5,
-    submissionDate: '2026-08-26',
-    shortDescription: 'Comparative study evaluating eco-friendly bio-leaching agents versus conventional cyanide-based gold and copper recovery.',
-    description: 'Evaluating bio-hydrometallurgical extraction pathways using Aspergillus niger and thiourea to replace hazardous pyrometallurgical smelting.',
-    objective: 'To formulate an environmentally benign chemical protocol for extracting gold and copper from pulverized mobile phone circuit boards while minimizing acid run-off.',
-    evidenceDescription: 'Laboratory assay spectral graph comparing leaching efficiency across citric acid, glycine, and hydrochloric acid solutions.',
+    submissionDate: '2026-09-02',
+    shortDescription: 'Engineering Investigation of an Electronic Device at End-of-Life',
+    description: 'To investigate the material and component anatomy of a non-functional hard disk, identify valuable and hazardous materials, evaluate their recovery and end-of-life pathways, and propose engineering modifications that improve repairability, disassembly, recycling, and overall circularity of the device.',
+    objective: 'To investigate the material and component anatomy of a non-functional hard disk, identify valuable and hazardous materials, evaluate their recovery and end-of-life pathways, and propose engineering modifications that improve repairability, disassembly, recycling, and overall circularity of the device.',
+    evidenceDescription: 'Official Device Anatomy 2.0 engineering worksheet and photographic evidence documenting the component teardown, material recovery, and circular lifecycle analysis of a non-functional hard disk.',
     evidenceItems: [
       {
-        id: 'ev-3-1',
-        url: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=1200&q=80',
-        name: 'Leaching Assay & Chemical Precipitation Chamber',
-        type: 'image',
-        caption: 'Spectrophotometer readings assessing copper ion extraction in glycine solutions',
-        fileSize: '1.8 MB'
-      },
-      {
         id: 'ev-3-pdf',
-        url: '/assignments/activity-03/assignment.pdf',
-        name: 'Precious Metal Leaching Research PDF',
+        url: '/assignments/activity-03/device-anatomy-ewem.pdf',
+        name: 'device-anatomy-ewem.pdf',
         type: 'pdf',
-        caption: 'Quantitative Assay Findings & Reaction Kinetics Analysis',
-        fileSize: '3.1 MB'
+        caption: 'Device Anatomy 2.0: Engineering Investigation of an Electronic Device at End-of-Life',
+        fileSize: '1.5 MB'
       }
     ],
-    coverImageUrl: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=1200&q=80',
-    whatILearned: 'Bio-leaching with amino acid reagents achieves up to 84% copper dissolution at room temperature without generating sulfur dioxide fumes typical of smelting. While the kinetic rate is slower than aggressive aqua regia, the environmental footprint is diminished by over 90%, making decentralized urban mining practical for local communities.',
-    sustainabilityConnection: 'Replaces carbon-intensive thermal smelting with closed-loop room-temperature chemistry, preventing hazardous emissions in developing recycling clusters.',
+    coverImageUrl: '',
+    whatILearned: 'This activity helped me understand that an electronic device such as a hard disk is a complex combination of materials, components, and potential environmental risks. I learned how different materials are selected for specific functions, such as aluminium for lightweight structural components, copper for electrical conductivity, and neodymium in permanent magnets because of its strong magnetic properties. I also learned that valuable materials such as copper, aluminium, and rare-earth magnets can potentially be recovered instead of being treated simply as waste. The activity highlighted the importance of controlled handling of components such as PCBs and designing products with easier disassembly, repair, refurbishment, and material recovery in mind. The hard disk therefore represents an opportunity for circular-economy practices rather than simply being discarded as e-waste.',
+    sustainabilityConnection: 'Understanding the material composition and end-of-life pathways of electronic devices supports the principles of a circular economy. Designing hard disks and similar products with standardized fasteners, modular components, easier material separation, and recoverable materials can improve repair, refurbishment, and recycling. Recovering materials such as copper, aluminium, and rare-earth magnets also reduces the need for extracting new resources and helps minimize the environmental impact of e-waste.',
     reflection: {
-      whatSurprisedMe: 'A single ton of discarded smartphone circuit boards contains up to 40 times more gold per ton than average mined ore from natural rock veins.',
-      whatChallengedMe: 'Maintaining solution pH homeostasis without consuming excessive neutralizing alkali reagents.',
-      whatWillIDoDifferently: 'Integrate automated peristaltic pH micro-pumps to maintain optimum chelation equilibria.'
+      whatSurprisedMe: 'I was surprised by how many different materials and valuable components are present inside a small hard disk. In particular, the presence of a powerful neodymium permanent magnet and recoverable materials such as copper and aluminium showed me that an apparently unusable device still contains significant material value.',
+      whatChallengedMe: 'The main challenge was identifying the different components and understanding why specific materials were used in them. It was also challenging to distinguish between materials that have high recovery value and those that require controlled handling because of their environmental risks. Understanding how the components could be separated without damaging or contaminating valuable materials was another important challenge.',
+      whatWillIDoDifferently: 'In future, I will consider end-of-life management earlier when evaluating or designing electronic products. I will focus more on modular construction, standardized fasteners, easier disassembly, material identification, and the possibility of recovering valuable components and materials. I will also consider repair, reuse, refurbishment, and recycling as part of the initial engineering design rather than treating disposal as the final step.'
     },
     references: [
       {
         id: 'ref-3-1',
-        text: 'Journal of Cleaner Production — Biohydrometallurgy of E-Waste',
-        url: 'https://www.sciencedirect.com/journal/journal-of-cleaner-production'
+        text: 'Central Pollution Control Board (CPCB), E-Waste Management Rules and Guidelines, Government of India.',
+        url: 'https://cpcb.nic.in/'
       },
       {
         id: 'ref-3-2',
-        text: 'Circular Electronics Partnership (CEP) Roadmap',
-        url: 'https://cep2030.org/'
+        text: 'Ministry of Environment, Forest and Climate Change (MoEFCC), E-Waste Management Resources, Government of India.',
+        url: 'https://moef.gov.in/'
+      },
+      {
+        id: 'ref-3-3',
+        text: 'United Nations Institute for Training and Research (UNITAR), Global E-waste Monitor.',
+        url: 'https://ewastemonitor.info/'
       }
     ],
-    pdfUrl: '/assignments/activity-03/assignment.pdf',
-    fileSize: '3.1 MB',
-    type: 'Research',
-    category: 'Research',
+    pdfUrl: '/assignments/activity-03/device-anatomy-ewem.pdf',
+    fileSize: '1.5 MB',
+    type: 'Activity',
+    category: 'Activities',
     status: 'Evaluated',
     isPublished: true
   },
