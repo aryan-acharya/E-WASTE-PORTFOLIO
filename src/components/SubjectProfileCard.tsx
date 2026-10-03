@@ -20,6 +20,7 @@ import {
 import { PROFILE_DATA } from '../lib/data/profile';
 import { NavSection } from '../types';
 import { StatsCounter } from './StatsCounter';
+import { TechStackSection } from './TechStackSection';
 
 interface SubjectProfileCardProps {
   onNavigate: (section: NavSection) => void;
@@ -207,6 +208,9 @@ export const SubjectProfileCard: React.FC<SubjectProfileCardProps> = ({
             icon={<Recycle className="w-5 h-5" />}
           />
         </motion.div>
+
+        {/* Tech Stack & Engineering Focus Section */}
+        <TechStackSection />
 
         {/* Animated Scroll Down Indicator */}
         <motion.div
