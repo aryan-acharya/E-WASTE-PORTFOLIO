@@ -5,13 +5,8 @@ import {
   AlertTriangle, 
   Target, 
   CheckCircle2, 
-  Scale, 
-  RefreshCw, 
-  Server, 
-  Zap, 
   TrendingUp, 
-  Flame, 
-  Award 
+  Flame 
 } from 'lucide-react';
 import { SubjectName } from '../types';
 
@@ -27,40 +22,6 @@ export const SubjectOverview: React.FC<SubjectOverviewProps> = () => {
     { text: 'Reducing landfill waste', icon: <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> },
     { text: 'Protecting human health', icon: <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> },
     { text: 'Promoting sustainable technology', icon: <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> },
-  ];
-
-
-  const learningOutcomes = [
-    {
-      title: 'Hazardous Waste & Risk Assessment',
-      desc: 'Skillfully audit toxicity pathways, heavy metal leachates, and occupational hazards in informal and formal e-waste processing.',
-      icon: <AlertTriangle className="w-6 h-6 text-emerald-500" />,
-      badge: 'Analytical Skill'
-    },
-    {
-      title: 'Circular Tech & Design for Disassembly',
-      desc: 'Apply modular engineering and cradle-to-cradle principles to extend electronic hardware lifespans.',
-      icon: <RefreshCw className="w-6 h-6 text-teal-500" />,
-      badge: 'Engineering Principle'
-    },
-    {
-      title: 'Hydrometallurgy & Urban Mining',
-      desc: 'Understand chemical and mechanical recovery processes to extract high-purity gold, silver, copper, and rare earth metals.',
-      icon: <Zap className="w-6 h-6 text-emerald-400" />,
-      badge: 'Material Science'
-    },
-    {
-      title: 'Regulatory & EPR Compliance Auditing',
-      desc: 'Formulate policy frameworks adhering to Government E-Waste Rules 2022 and Extended Producer Responsibility (EPR).',
-      icon: <Scale className="w-6 h-6 text-emerald-500" />,
-      badge: 'Policy & Legal'
-    },
-    {
-      title: 'Green Computing & Carbon Optimization',
-      desc: 'Design energy-efficient cloud software architectures, server cooling, and sustainable IT infrastructures.',
-      icon: <Server className="w-6 h-6 text-teal-400" />,
-      badge: 'Sustainability Science'
-    }
   ];
 
   return (
@@ -179,60 +140,6 @@ export const SubjectOverview: React.FC<SubjectOverviewProps> = () => {
           </div>
         </motion.div>
 
-
-        {/* Section 5: Learning Outcomes */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Academic Proficiency</span>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Learning Outcomes</h3>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-              <Award className="w-4 h-4" />
-              <span>Competency Framework</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {learningOutcomes.map((outcome, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: idx * 0.08 }}
-                whileHover={{ y: -6 }}
-                className="rounded-[24px] glass-card p-6 border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-500/50 transition-all duration-300 flex flex-col justify-between group shadow-md"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 group-hover:scale-110 transition-transform">
-                      {outcome.icon}
-                    </div>
-                    <span className="text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                      {outcome.badge}
-                    </span>
-                  </div>
-
-                  <h4 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors tracking-tight">
-                    {outcome.title}
-                  </h4>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {outcome.desc}
-                  </p>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Verified Outcome
-                  </span>
-                  <span>Outcome #{idx + 1}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
       </div>
     </section>
