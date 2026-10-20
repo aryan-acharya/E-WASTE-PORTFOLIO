@@ -73,7 +73,7 @@ export interface Assignment {
   references?: AssignmentReference[];
   
   // PDF Document
-  pdfUrl: string;
+  pdfUrl?: string;
   fileSize: string;
   
   // Meta

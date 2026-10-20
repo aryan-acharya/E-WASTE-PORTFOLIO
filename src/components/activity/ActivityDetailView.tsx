@@ -22,15 +22,15 @@ import { LightboxModal } from '../LightboxModal';
 
 interface ActivityDetailViewProps {
   activity: Assignment;
-  allActivities: Assignment[];
+  allActivities?: Assignment[];
   onBack: () => void;
-  onSelectActivity: (activity: Assignment) => void;
-  onOpenPdfViewer: (activity: Assignment) => void;
+  onSelectActivity?: (activity: Assignment) => void;
+  onOpenPdfViewer?: (activity: Assignment) => void;
 }
 
 export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
   activity,
-  allActivities,
+  allActivities = [],
   onBack,
   onSelectActivity,
   onOpenPdfViewer
@@ -318,25 +318,50 @@ export const ActivityDetailView: React.FC<ActivityDetailViewProps> = ({
               </div>
             ) : null}
 
-            {/* Document PDF Preview & Download Actions */}
+            {/* Evidence Preview & Download Actions */}
             <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button
-                  onClick={() => onOpenPdfViewer(activity)}
-                  className="w-full sm:w-auto px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
-                >
-                  <FileText className="w-4 h-4" />
-                  Preview PDF Submission
-                </button>
+                {activity.pdfUrl ? (
+                  <>
+                    <button
+                      onClick={() => onOpenPdfViewer && onOpenPdfViewer(activity)}
+                      className="w-full sm:w-auto px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Preview PDF Submission
+                    </button>
 
-                <a
-                  href={activity.pdfUrl}
-                  download
-                  className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-mono font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
-                >
-                  <Download className="w-4 h-4 text-emerald-400" />
-                  Download ({activity.fileSize})
-                </a>
+                    <a
+                      href={activity.pdfUrl}
+                      download
+                      className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-mono font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Download className="w-4 h-4 text-emerald-400" />
+                      Download ({activity.fileSize || 'PDF'})
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    {activity.evidenceItems && activity.evidenceItems.length > 0 && (
+                      <button
+                        onClick={() => setSelectedImage(activity.evidenceItems![0])}
+                        className="w-full sm:w-auto px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                        Preview Evidence
+                      </button>
+                    )}
+
+                    <a
+                      href={activity.evidenceItems?.[0]?.url || activity.coverImageUrl}
+                      download={activity.evidenceItems?.[0]?.name ? `${activity.evidenceItems[0].name}.png` : `${activity.id}-evidence.png`}
+                      className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-mono font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Download className="w-4 h-4 text-emerald-400" />
+                      Download Evidence ({activity.fileSize || 'Image'})
+                    </a>
+                  </>
+                )}
               </div>
 
               <span className="text-xs font-mono text-slate-400">

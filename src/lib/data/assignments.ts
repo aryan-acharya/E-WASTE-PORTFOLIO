@@ -246,5 +246,65 @@ export const ASSIGNMENTS: Assignment[] = [
     category: 'Activities',
     status: 'Evaluated',
     isPublished: true
+  },
+  {
+    id: 'activity-05',
+    activityNumber: 5,
+    activityCode: 'ACTIVITY 05',
+    slug: 'activity-05',
+    tagPill: 'QUIZ',
+    title: 'E-WASTE QUIZ',
+    subject: 'E-Waste & Environmental Management',
+    weekNumber: 9,
+    submissionDate: '2026-10-18',
+    shortDescription: 'Interactive Knowledge Assessment on E-Waste Management',
+    description: 'To evaluate and reinforce my understanding of electronic waste management, recycling practices, environmental impacts, and sustainable disposal methods through an interactive quiz. The activity aimed to assess my knowledge, identify gaps in my understanding, and improve my ability to recognize responsible e-waste handling and recycling practices.',
+    objective: 'To evaluate and reinforce my understanding of electronic waste management, recycling practices, environmental impacts, and sustainable disposal methods through an interactive quiz. The activity aimed to assess my knowledge, identify gaps in my understanding, and improve my ability to recognize responsible e-waste handling and recycling practices.',
+    evidenceDescription: 'Official quiz completion results for "Recycling of E-waste" demonstrating performance metrics: Score: 7,120 | Accuracy: 90% | Correct Answers: 9 | Incorrect Answers: 1 | Total Questions: 10 | Coins Earned: 180.',
+    evidenceItems: [
+      {
+        id: 'ev-5-1',
+        url: '/assignments/activity-05/recycling-of-e-waste-quiz-result.png',
+        name: 'Recycling of E-waste — Quiz Completion Results',
+        type: 'image',
+        caption: 'Quiz Completion Screen — "Recycling of E-waste" (Score: 7,120 • Accuracy: 90% • 9 Correct / 1 Incorrect • 180 Coins)',
+        fileSize: '248 KB'
+      }
+    ],
+    coverImageUrl: '/assignments/activity-05/recycling-of-e-waste-quiz-result.png',
+    whatILearned: 'This activity helped me assess my understanding of e-waste management through an interactive, question-based learning experience. By answering questions related to electronic waste and recycling, I reinforced the importance of responsible disposal, material recovery, and environmentally sound recycling practices. Achieving 90% accuracy, with 9 out of 10 answers correct, demonstrated that I had a strong understanding of the topics covered while also highlighting an opportunity to improve. I learned that quizzes can be useful tools for identifying knowledge gaps, reinforcing important concepts, and encouraging continuous learning about sustainable electronic waste management.',
+    sustainabilityConnection: 'Responsible e-waste management is essential for reducing environmental pollution, recovering valuable resources, and preventing hazardous materials from entering landfills or being handled unsafely. This quiz reinforced the importance of making informed decisions about electronic product disposal, reuse, and recycling. Applying this knowledge in everyday life can encourage responsible consumer behavior and support the development of more sustainable waste-management systems.',
+    reflection: {
+      whatSurprisedMe: 'I was surprised by how an interactive quiz could test my understanding of e-waste management in a short period while making the learning process engaging. Scoring 90% accuracy showed me that I understood most of the concepts, but getting one question wrong reminded me that there is still room to strengthen my knowledge.',
+      whatChallengedMe: 'The main challenge was interpreting each question carefully and selecting the most appropriate answer from the available options. Some questions required me to distinguish between similar concepts related to recycling, disposal, and environmental responsibility. Maintaining accuracy while answering within the time available also required concentration and quick decision-making.',
+      whatWillIDoDifferently: 'In future, I will review the questions I answer incorrectly and revisit the relevant concepts to strengthen my understanding. I will also focus on verifying technical and environmental information rather than relying solely on memory. By combining interactive assessments with further reading and practical activities, I aim to improve my accuracy and apply my knowledge more confidently to real-world e-waste management challenges.'
+    },
+    references: [
+      {
+        id: 'ref-5-1',
+        text: 'Central Pollution Control Board (CPCB), Government of India — E-Waste Management Rules and Guidelines.',
+        url: 'https://cpcb.nic.in/'
+      },
+      {
+        id: 'ref-5-2',
+        text: 'United Nations Institute for Training and Research (UNITAR) and International Telecommunication Union (ITU) — Global E-waste Monitor.',
+        url: 'https://ewastemonitor.info/'
+      },
+      {
+        id: 'ref-5-3',
+        text: 'Ministry of Environment, Forest and Climate Change (MoEFCC), Government of India — Environmental policies and e-waste management resources.',
+        url: 'https://moef.gov.in/'
+      },
+      {
+        id: 'ref-5-4',
+        text: 'United Nations Environment Programme (UNEP) — Waste management and environmental sustainability resources.',
+        url: 'https://www.unep.org/'
+      }
+    ],
+    fileSize: '248 KB',
+    type: 'Activity',
+    category: 'Activities',
+    status: 'Evaluated',
+    isPublished: true
   }
 ];
