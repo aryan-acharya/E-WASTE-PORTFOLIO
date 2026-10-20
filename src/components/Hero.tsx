@@ -82,9 +82,19 @@ export const Hero: React.FC<HeroProps> = ({
             <div className="lg:col-span-7 space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
                 {/* Avatar with Emerald Pulse */}
-                <div className="relative group">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-700 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-xl shadow-emerald-500/25 border-2 border-white dark:border-slate-800 transform group-hover:scale-105 transition-transform duration-300">
-                    <Leaf className="w-10 h-10 text-white" />
+                <div className="relative group shrink-0">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-700 shadow-xl shadow-emerald-500/25 border-2 border-white dark:border-slate-800 transform group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+                    {PROFILE_DATA.avatarUrl ? (
+                      <img
+                        src={PROFILE_DATA.avatarUrl}
+                        alt={PROFILE_DATA.name}
+                        className="w-full h-full object-cover object-[center_20%]"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white font-black text-2xl sm:text-3xl">
+                        <Leaf className="w-10 h-10 text-white" />
+                      </div>
+                    )}
                   </div>
                   {/* Status Indicator */}
                   <span className="absolute -bottom-1 -right-1 flex h-5 w-5">

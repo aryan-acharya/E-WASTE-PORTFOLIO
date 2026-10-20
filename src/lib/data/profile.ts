@@ -11,6 +11,7 @@ export const PROFILE_DATA: ProfileInfo = {
   description: 'Welcome to my Academic Portfolio for E-Waste & Environmental Management. This platform serves as a comprehensive digital repository showcasing research reports, practical lab studies, field activities, slide presentations, and circular economy strategies aimed at mitigating electronic waste and building sustainable technology solutions.',
   initials: 'AA',
   email: 'aryan.acharya@university.edu',
-  department: 'Department of Information Technology & Environmental Sciences'
+  department: 'Department of Information Technology & Environmental Sciences',
+  avatarUrl: '/profile/aryan-acharya.jpg'
 };
 

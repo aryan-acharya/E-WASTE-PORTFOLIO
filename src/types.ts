@@ -101,5 +101,6 @@ export interface ProfileInfo {
   initials: string;
   email: string;
   department: string;
+  avatarUrl?: string;
 }
 
